@@ -5,6 +5,7 @@ import com.mayis.auth_service.model.enums.RoleName;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
 
 import java.util.UUID;
 
@@ -12,7 +13,7 @@ import java.util.UUID;
 @Setter
 @Entity
 @Table(name = "roles")
-public class Role extends SoftDeletableEntity {
+public class Role extends SoftDeletableEntity implements GrantedAuthority {
 
     @Id
     private UUID id;
@@ -22,4 +23,9 @@ public class Role extends SoftDeletableEntity {
     private RoleName name;
 
     private String description;
+
+    @Override
+    public String getAuthority() {
+        return name.name();
+    }
 }
