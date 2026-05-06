@@ -1,4 +1,4 @@
-package com.mayis.auth_service.model.entity.base;
+package com.mayis.auth_service.model.base;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
