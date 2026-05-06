@@ -1,4 +1,8 @@
 package com.mayis.auth_service.model.enums;
 
 public enum UserStatus {
+    ACTIVE,
+    INACTIVE,
+    SUSPENDED,
+    DELETED
 }
