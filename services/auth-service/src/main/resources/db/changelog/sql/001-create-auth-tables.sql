@@ -37,14 +37,18 @@ CREATE TABLE roles (
                        deleted_at TIMESTAMP,
                        deleted_by UUID,
 
-                       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                       updated_at TIMESTAMP
 );
 
 CREATE TABLE user_roles (
+                            id UUID PRIMARY KEY,
+
                             user_id UUID NOT NULL,
                             role_id UUID NOT NULL,
 
-                            PRIMARY KEY (user_id, role_id),
+                            CONSTRAINT uk_user_roles_user_role
+                                UNIQUE (user_id, role_id),
 
                             CONSTRAINT fk_user_roles_user
                                 FOREIGN KEY (user_id)
