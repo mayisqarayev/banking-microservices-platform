@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-auth-tables
+      author: qarayevmayis
+      changes:
+        - sqlFile:
+            path: db/changelog/sql/001-create-auth-tables.sql
