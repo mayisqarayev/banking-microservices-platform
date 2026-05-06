@@ -1,4 +1,11 @@
 package com.mayis.auth_service.repository;
 
-public interface UserRoleRepository {
+import com.mayis.auth_service.model.entity.UserRole;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.UUID;
+
+@Repository
+public interface UserRoleRepository extends JpaRepository<UserRole, UUID> {
 }
