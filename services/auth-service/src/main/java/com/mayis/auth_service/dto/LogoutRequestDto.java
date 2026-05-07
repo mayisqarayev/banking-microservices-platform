@@ -1,0 +1,9 @@
+package com.mayis.auth_service.dto;
+
+import jakarta.validation.constraints.NotBlank;
+
+public record LogoutRequestDto(
+        @NotBlank
+        String refreshToken
+) {
+}
