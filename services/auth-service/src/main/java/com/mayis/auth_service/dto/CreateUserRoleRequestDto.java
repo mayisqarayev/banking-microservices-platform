@@ -1,4 +1,9 @@
 package com.mayis.auth_service.dto;
 
-public class CreateUserRoleRequestDto {
+import java.util.UUID;
+
+public record CreateUserRoleRequestDto(
+        UUID userId,
+        UUID roleId
+) {
 }
