@@ -1,11 +1,11 @@
 package com.mayis.auth_service.controller;
 
+import com.mayis.auth_service.dto.ChangePasswordRequestDto;
 import com.mayis.auth_service.dto.UserResponseDto;
 import com.mayis.auth_service.service.UserService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,5 +28,31 @@ public class UserController {
     @GetMapping("/{id}")
     public UserResponseDto getCurrentUserById(@PathVariable UUID id) {
         return userService.getCurrentUser(id);
+    }
+
+    @PatchMapping("/{userId}/change-password")
+    public void changePassword(
+            @PathVariable UUID userId,
+            @Valid @RequestBody ChangePasswordRequestDto request
+    ) {
+        userService.changePassword(userId, request);
+    }
+
+    @PatchMapping("/{userId}/unlock")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void unlockUser(@PathVariable UUID userId) {
+        userService.unlockUser(userId);
+    }
+
+    @DeleteMapping("/{userId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void deleteUser(@PathVariable UUID userId) {
+        userService.softDeleteUser(userId);
+    }
+
+    @PatchMapping("/{userId}/restore")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void restoreUser(@PathVariable UUID userId) {
+        userService.restoreUser(userId);
     }
 }
