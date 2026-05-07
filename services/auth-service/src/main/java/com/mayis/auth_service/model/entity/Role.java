@@ -24,6 +24,13 @@ public class Role extends SoftDeletableEntity implements GrantedAuthority {
 
     private String description;
 
+    @PrePersist
+    public void prePersist() {
+        if (id == null) {
+            id = UUID.randomUUID();
+        }
+    }
+
     @Override
     public String getAuthority() {
         return name.name();
