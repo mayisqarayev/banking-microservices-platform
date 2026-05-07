@@ -1,8 +1,6 @@
 package com.mayis.auth_service.controller;
 
-import com.mayis.auth_service.dto.AuthResponseDto;
-import com.mayis.auth_service.dto.LoginRequestDto;
-import com.mayis.auth_service.dto.RegisterRequestDto;
+import com.mayis.auth_service.dto.*;
 import com.mayis.auth_service.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -27,5 +25,16 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponseDto login(@Valid @RequestBody LoginRequestDto request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/refresh")
+    public AuthResponseDto refresh(@Valid @RequestBody RefreshTokenRequestDto request) {
+        return authService.refresh(request);
+    }
+
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(@Valid @RequestBody LogoutRequestDto request) {
+        authService.logout(request);
     }
 }
