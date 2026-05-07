@@ -7,6 +7,7 @@ import com.mayis.auth_service.model.entity.User;
 import com.mayis.auth_service.model.enums.RoleName;
 import com.mayis.auth_service.security.JwtService;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,16 +57,21 @@ public class AuthService {
 
     @Transactional
     public AuthResponseDto login(LoginRequestDto request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.username(),
-                        request.password()
-                )
-        );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.username(),
+                            request.password()
+                    )
+            );
+        } catch (BadCredentialsException ex) {
+            userService.handleFailedLogin(request.username());
+            throw ex;
+        }
+
 
         User userByUsername = userService.getUserByUsername(request.username());
-        userByUsername.setFailedLoginAttempts(0);
-        userByUsername.setLastLoginAt(LocalDateTime.now());
+        userService.handleSuccessfulLogin(userByUsername);
 
         String accessToken = jwtService.generateAccessToken(userByUsername);
         String refreshToken = refreshTokenService.generateRefreshToken(new GenerateRefreshTokenRequestDto(
