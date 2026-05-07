@@ -1,6 +1,7 @@
 package com.mayis.auth_service.service;
 
 import com.mayis.auth_service.config.properties.AuthSecurityProperties;
+import com.mayis.auth_service.dto.ChangePasswordRequestDto;
 import com.mayis.auth_service.dto.RegisterRequestDto;
 import com.mayis.auth_service.dto.UserResponseDto;
 import com.mayis.auth_service.exception.UserAlreadyExistsException;
@@ -8,6 +9,7 @@ import com.mayis.auth_service.exception.UserNotFoundException;
 import com.mayis.auth_service.model.entity.User;
 import com.mayis.auth_service.model.enums.UserStatus;
 import com.mayis.auth_service.repository.UserRepository;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +68,52 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         return user;
+    }
+
+    @Transactional
+    public void unlockUser(UUID userId) {
+        User user = getUserById(userId);
+
+        user.setFailedLoginAttempts(0);
+        user.setAccountNonLocked(true);
+    }
+
+    @Transactional
+    public void softDeleteUser(UUID userId) {
+        User user = getUserById(userId);
+
+        user.setDeleted(true);
+        user.setDeletedAt(LocalDateTime.now());
+        user.setEnabled(false);
+    }
+
+    @Transactional
+    public void restoreUser(UUID userId) {
+        User user = getUserById(userId);
+
+        user.setDeleted(false);
+        user.setUpdatedAt(LocalDateTime.now());
+        user.setEnabled(true);
+    }
+
+    @Transactional
+    public void changePassword(
+            UUID userId,
+            ChangePasswordRequestDto request
+    ) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(
+                request.currentPassword(),
+                user.getPassword()
+        )) {
+            throw new BadCredentialsException("Current password is incorrect");
+        }
+
+        user.setPassword(
+                passwordEncoder.encode(request.newPassword())
+        );
     }
 
     @Transactional
