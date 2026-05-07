@@ -1,4 +1,8 @@
 package com.mayis.auth_service.dto;
 
-public class GenerateRefreshTokenRequestDto {
+import java.util.UUID;
+
+public record GenerateRefreshTokenRequestDto(
+        UUID userId
+) {
 }
