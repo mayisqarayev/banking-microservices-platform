@@ -1,4 +1,12 @@
 package com.mayis.auth_service.dto;
 
-public record LoginRequestDto() {
+import jakarta.validation.constraints.NotBlank;
+
+public record LoginRequestDto(
+        @NotBlank
+        String username,
+
+        @NotBlank
+        String password
+) {
 }
