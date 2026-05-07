@@ -1,4 +1,9 @@
 package com.mayis.auth_service.dto;
 
-public record RefreshTokenRequestDto() {
+import jakarta.validation.constraints.NotBlank;
+
+public record RefreshTokenRequestDto(
+        @NotBlank
+        String refreshToken
+) {
 }
