@@ -1,6 +1,7 @@
 package com.mayis.auth_service.service;
 
 import com.mayis.auth_service.dto.*;
+import com.mayis.auth_service.model.entity.RefreshToken;
 import com.mayis.auth_service.model.entity.Role;
 import com.mayis.auth_service.model.entity.User;
 import com.mayis.auth_service.model.enums.RoleName;
@@ -76,5 +77,55 @@ public class AuthService {
                 refreshToken,
                 "Bearer"
         );
+    }
+
+    @Transactional
+    public AuthResponseDto refresh(RefreshTokenRequestDto requestDto) {
+        String rawRefreshToken = requestDto.refreshToken();
+
+        if(!jwtService.isRefreshToken(rawRefreshToken)) {
+            throw new RuntimeException("Invalid token type");
+        }
+
+        String username = jwtService.extractUsername(rawRefreshToken);
+        User user = userService.getUserByUsername(username);
+
+        RefreshToken storedToken = refreshTokenService.findValidRefreshToken(
+                user,
+                rawRefreshToken
+        );
+        
+        refreshTokenService.revoke(storedToken);
+        
+        String accessToken = jwtService.generateAccessToken(user);
+        String newRefreshToken = refreshTokenService.generateRefreshToken(
+                new GenerateRefreshTokenRequestDto(user.getId())
+        );
+        
+        return new AuthResponseDto(
+                accessToken,
+                newRefreshToken,
+                "Bearer"
+        );
+    }
+    
+    @Transactional
+    public void logout(LogoutRequestDto requestDto) {
+        String rawRefreshToken = requestDto.refreshToken();
+
+        if (!jwtService.isRefreshToken(rawRefreshToken)) {
+            throw new RuntimeException("Invalid token type");
+        }
+
+        String username = jwtService.extractUsername(rawRefreshToken);
+
+        User user = userService.getUserByUsername(username);
+
+        RefreshToken storedToken = refreshTokenService.findValidRefreshToken(
+                user,
+                rawRefreshToken
+        );
+
+        refreshTokenService.revoke(storedToken);
     }
 }
