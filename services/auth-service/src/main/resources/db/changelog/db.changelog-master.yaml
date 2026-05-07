@@ -5,3 +5,9 @@ databaseChangeLog:
       changes:
         - sqlFile:
             path: db/changelog/sql/001-create-auth-tables.sql
+  - changeSet:
+      id: 002-seed-roles
+      author: qarayevmayis
+      changes:
+        - sqlFile:
+            path: db/changelog/sql/002-seed-roles.sql
