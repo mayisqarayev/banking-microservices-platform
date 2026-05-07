@@ -58,7 +58,7 @@ public class User extends SoftDeletableEntity implements UserDetails {
 
     private LocalDateTime lastLoginAt;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private Set<UserRole> roles;
 
     @PrePersist
