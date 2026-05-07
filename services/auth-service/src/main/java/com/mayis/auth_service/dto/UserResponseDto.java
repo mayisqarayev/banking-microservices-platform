@@ -1,5 +1,7 @@
 package com.mayis.auth_service.dto;
 
+import com.mayis.auth_service.model.enums.UserStatus;
+
 import java.util.UUID;
 
 public record UserResponseDto(
@@ -8,6 +10,6 @@ public record UserResponseDto(
         String email,
         String firstName,
         String lastName,
-        String status
+        UserStatus status
 ) {
 }
