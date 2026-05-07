@@ -3,6 +3,7 @@ package com.mayis.auth_service.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -97,7 +98,7 @@ public class GlobalExceptionHandler {
         );
     }
 
-    /*@ExceptionHandler(Exception.class)
+    @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleGenericException(
             Exception exception,
@@ -110,7 +111,21 @@ public class GlobalExceptionHandler {
                 null
         );
     }
-*/
+
+    @ExceptionHandler(LockedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleLocked(
+            LockedException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(
+                HttpStatus.FORBIDDEN,
+                "User account is locked",
+                request.getRequestURI(),
+                null
+        );
+    }
+
     private ErrorResponse buildErrorResponse(
             HttpStatus status,
             String message,
