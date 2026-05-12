@@ -118,14 +118,15 @@ public class UserService {
 
     @Transactional
     protected void handleFailedLogin(String username) {
-        User user = getUserByUsername(username);
+        userRepository.findByUsernameAndDeletedFalse(username)
+                .ifPresent(user -> {
+                    int attempts = user.getFailedLoginAttempts() + 1;
+                    user.setFailedLoginAttempts(attempts);
 
-        int attempts = user.getFailedLoginAttempts() + 1;
-        user.setFailedLoginAttempts(attempts);
-
-        if (attempts >= authSecurityProperties.maxFailedLoginAttempts()) {
-            user.setAccountNonLocked(false);
-        }
+                    if (attempts >= authSecurityProperties.maxFailedLoginAttempts()) {
+                        user.setAccountNonLocked(false);
+                    }
+                });
     }
 
     @Transactional
