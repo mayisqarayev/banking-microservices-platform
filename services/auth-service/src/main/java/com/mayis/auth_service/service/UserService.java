@@ -6,6 +6,7 @@ import com.mayis.auth_service.dto.ChangePasswordRequestDto;
 import com.mayis.auth_service.dto.RegisterRequestDto;
 import com.mayis.auth_service.dto.UserResponseDto;
 import com.mayis.auth_service.exception.UserAlreadyDeletedException;
+import com.mayis.auth_service.exception.UserAlreadyRestoredException;
 import com.mayis.auth_service.exception.UserAlreadyUnlockedException;
 import com.mayis.auth_service.exception.UserAlreadyExistsException;
 import com.mayis.auth_service.exception.UserNotFoundException;
@@ -110,11 +111,22 @@ public class UserService {
 
     @Transactional
     public void restoreUser(UUID userId) {
-        User user = getUserById(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (!user.isDeleted()) {
+            throw new UserAlreadyRestoredException("User is already restored");
+        }
 
         user.setDeleted(false);
-        user.setUpdatedAt(LocalDateTime.now());
+        user.setDeletedAt(null);
+        user.setDeletedBy(null);
+        user.setStatus(UserStatus.ACTIVE);
         user.setEnabled(true);
+        user.setAccountNonLocked(true);
+        user.setAccountNonExpired(true);
+        user.setCredentialsNonExpired(true);
+        user.setFailedLoginAttempts(0);
     }
 
     @Transactional
