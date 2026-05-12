@@ -59,7 +59,7 @@ public class UserService {
     }
 
     protected User getUserById(UUID id) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
         return user;
     }
@@ -109,8 +109,7 @@ public class UserService {
             throw new AccessDeniedException("You are not allowed to change this user's password");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        User user = getUserById(userId);
 
         if (!passwordEncoder.matches(
                 request.currentPassword(),
