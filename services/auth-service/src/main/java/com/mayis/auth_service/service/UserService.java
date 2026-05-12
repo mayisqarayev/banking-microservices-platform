@@ -136,7 +136,7 @@ public class UserService {
     }
 
     public UserResponseDto getCurrentUser(UUID id) {
-        User user = userRepository.findById(id)
+        User user = userRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         return new UserResponseDto(
@@ -153,7 +153,7 @@ public class UserService {
     }
 
     public List<UserResponseDto> getAll() {
-        return userRepository.findAll()
+        return userRepository.findAllByDeletedFalse()
                 .stream()
                 .map(i -> {
                     return new UserResponseDto(
