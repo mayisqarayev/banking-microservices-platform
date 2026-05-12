@@ -5,6 +5,7 @@ import com.mayis.auth_service.exception.AccessDeniedException;
 import com.mayis.auth_service.dto.ChangePasswordRequestDto;
 import com.mayis.auth_service.dto.RegisterRequestDto;
 import com.mayis.auth_service.dto.UserResponseDto;
+import com.mayis.auth_service.exception.InvalidUserStateException;
 import com.mayis.auth_service.exception.UserAlreadyDeletedException;
 import com.mayis.auth_service.exception.UserAlreadyRestoredException;
 import com.mayis.auth_service.exception.UserAlreadyUnlockedException;
@@ -142,6 +143,14 @@ public class UserService {
         }
 
         User user = getUserById(userId);
+
+        if (user.getStatus() != UserStatus.ACTIVE
+                || !user.isEnabled()
+                || !user.isAccountNonLocked()
+                || !user.isAccountNonExpired()
+                || !user.isCredentialsNonExpired()) {
+            throw new InvalidUserStateException("User is not in a valid state for password change");
+        }
 
         if (!passwordEncoder.matches(
                 request.currentPassword(),
