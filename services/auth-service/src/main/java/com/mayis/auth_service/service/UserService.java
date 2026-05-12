@@ -5,6 +5,7 @@ import com.mayis.auth_service.exception.AccessDeniedException;
 import com.mayis.auth_service.dto.ChangePasswordRequestDto;
 import com.mayis.auth_service.dto.RegisterRequestDto;
 import com.mayis.auth_service.dto.UserResponseDto;
+import com.mayis.auth_service.exception.UserAlreadyUnlockedException;
 import com.mayis.auth_service.exception.UserAlreadyExistsException;
 import com.mayis.auth_service.exception.UserNotFoundException;
 import com.mayis.auth_service.model.entity.User;
@@ -75,8 +76,16 @@ public class UserService {
     public void unlockUser(UUID userId) {
         User user = getUserById(userId);
 
+        if (user.isAccountNonLocked()) {
+            throw new UserAlreadyUnlockedException("User is already unlocked");
+        }
+
         user.setFailedLoginAttempts(0);
+        user.setStatus(UserStatus.ACTIVE);
+        user.setEnabled(true);
         user.setAccountNonLocked(true);
+        user.setAccountNonExpired(true);
+        user.setCredentialsNonExpired(true);
     }
 
     @Transactional
@@ -131,6 +140,7 @@ public class UserService {
                     user.setFailedLoginAttempts(attempts);
 
                     if (attempts >= authSecurityProperties.maxFailedLoginAttempts()) {
+                        user.setStatus(UserStatus.SUSPENDED);
                         user.setAccountNonLocked(false);
                     }
                 });
