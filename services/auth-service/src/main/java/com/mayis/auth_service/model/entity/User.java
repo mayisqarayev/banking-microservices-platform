@@ -78,4 +78,24 @@ public class User extends SoftDeletableEntity implements UserDetails {
                 .map(UserRole::getRole)
                 .toList();
     }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return accountNonExpired;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return accountNonLocked;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return credentialsNonExpired;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled && !deleted && status == UserStatus.ACTIVE;
+    }
 }
