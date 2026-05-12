@@ -1,6 +1,7 @@
 package com.mayis.auth_service.service;
 
 import com.mayis.auth_service.dto.*;
+import com.mayis.auth_service.exception.InvalidTokenTypeException;
 import com.mayis.auth_service.model.entity.RefreshToken;
 import com.mayis.auth_service.model.entity.Role;
 import com.mayis.auth_service.model.entity.User;
@@ -90,7 +91,7 @@ public class AuthService {
         String rawRefreshToken = requestDto.refreshToken();
 
         if(!jwtService.isRefreshToken(rawRefreshToken)) {
-            throw new RuntimeException("Invalid token type");
+            throw new InvalidTokenTypeException("Invalid token type");
         }
 
         String username = jwtService.extractUsername(rawRefreshToken);
@@ -120,7 +121,7 @@ public class AuthService {
         String rawRefreshToken = requestDto.refreshToken();
 
         if (!jwtService.isRefreshToken(rawRefreshToken)) {
-            throw new RuntimeException("Invalid token type");
+            throw new InvalidTokenTypeException("Invalid token type");
         }
 
         String username = jwtService.extractUsername(rawRefreshToken);

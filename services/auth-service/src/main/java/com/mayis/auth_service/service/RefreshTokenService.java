@@ -1,11 +1,11 @@
 package com.mayis.auth_service.service;
 
 import com.mayis.auth_service.dto.GenerateRefreshTokenRequestDto;
+import com.mayis.auth_service.exception.InvalidRefreshTokenException;
 import com.mayis.auth_service.model.entity.RefreshToken;
 import com.mayis.auth_service.model.entity.User;
 import com.mayis.auth_service.repository.RefreshTokenRepository;
 import com.mayis.auth_service.security.JwtService;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -49,7 +49,7 @@ public class RefreshTokenService {
                 .filter(token -> token.getExpiresAt().isAfter(LocalDateTime.now()))
                 .filter(token -> token.getTokenHash().equals(hashedToken))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+                .orElseThrow(() -> new InvalidRefreshTokenException("Invalid refresh token"));
     }
 
     protected void revoke(RefreshToken refreshToken) {
