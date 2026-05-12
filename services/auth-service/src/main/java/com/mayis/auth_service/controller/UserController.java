@@ -37,9 +37,10 @@ public class UserController {
     @PatchMapping("/{userId}/change-password")
     public void changePassword(
             @PathVariable UUID userId,
-            @Valid @RequestBody ChangePasswordRequestDto request
+            @Valid @RequestBody ChangePasswordRequestDto request,
+            Authentication authentication
     ) {
-        userService.changePassword(userId, request);
+        userService.changePassword(userId, request, authentication.getName());
     }
 
     @PatchMapping("/{userId}/unlock")

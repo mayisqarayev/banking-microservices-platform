@@ -100,8 +100,15 @@ public class UserService {
     @Transactional
     public void changePassword(
             UUID userId,
-            ChangePasswordRequestDto request
+            ChangePasswordRequestDto request,
+            String currentUsername
     ) {
+        User currentUser = getUserByUsername(currentUsername);
+
+        if (!currentUser.getId().equals(userId)) {
+            throw new AccessDeniedException("You are not allowed to change this user's password");
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
