@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -16,4 +17,6 @@ public abstract class SoftDeletableEntity extends BaseEntity {
     protected boolean deleted = false;
 
     protected LocalDateTime deletedAt;
+
+    protected UUID deletedBy;
 }

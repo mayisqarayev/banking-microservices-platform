@@ -1,0 +1,2 @@
+ALTER TABLE refresh_tokens
+    DROP COLUMN deleted_by;
