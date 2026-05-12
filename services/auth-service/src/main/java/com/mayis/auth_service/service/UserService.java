@@ -5,6 +5,7 @@ import com.mayis.auth_service.exception.AccessDeniedException;
 import com.mayis.auth_service.dto.ChangePasswordRequestDto;
 import com.mayis.auth_service.dto.RegisterRequestDto;
 import com.mayis.auth_service.dto.UserResponseDto;
+import com.mayis.auth_service.exception.UserAlreadyDeletedException;
 import com.mayis.auth_service.exception.UserAlreadyUnlockedException;
 import com.mayis.auth_service.exception.UserAlreadyExistsException;
 import com.mayis.auth_service.exception.UserNotFoundException;
@@ -90,11 +91,21 @@ public class UserService {
 
     @Transactional
     public void softDeleteUser(UUID userId) {
-        User user = getUserById(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (user.isDeleted()) {
+            throw new UserAlreadyDeletedException("User is already deleted");
+        }
 
         user.setDeleted(true);
+        user.setStatus(UserStatus.DELETED);
         user.setDeletedAt(LocalDateTime.now());
+        user.setFailedLoginAttempts(0);
         user.setEnabled(false);
+        user.setAccountNonLocked(false);
+        user.setAccountNonExpired(false);
+        user.setCredentialsNonExpired(false);
     }
 
     @Transactional
