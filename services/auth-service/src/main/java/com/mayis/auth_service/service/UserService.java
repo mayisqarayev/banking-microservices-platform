@@ -146,7 +146,9 @@ public class UserService {
                 user.getFirstName(),
                 user.getLastName(),
                 user.getStatus(),
-                user.getRoles().stream().map(String::valueOf).collect(Collectors.toSet())
+                user.getRoles().stream()
+                        .map(userRole -> userRole.getRole().getAuthority())
+                        .collect(Collectors.toSet())
         );
     }
 
@@ -161,7 +163,9 @@ public class UserService {
                             i.getFirstName(),
                             i.getLastName(),
                             i.getStatus(),
-                            i.getRoles().stream().map(String::valueOf).collect(Collectors.toSet())
+                            i.getRoles().stream()
+                                    .map(userRole -> userRole.getRole().getAuthority())
+                                    .collect(Collectors.toSet())
                     );
                 }).toList();
     }
