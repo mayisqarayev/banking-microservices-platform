@@ -1,6 +1,7 @@
 package com.mayis.auth_service.service;
 
 import com.mayis.auth_service.config.properties.AuthSecurityProperties;
+import com.mayis.auth_service.exception.AccessDeniedException;
 import com.mayis.auth_service.dto.ChangePasswordRequestDto;
 import com.mayis.auth_service.dto.RegisterRequestDto;
 import com.mayis.auth_service.dto.UserResponseDto;
@@ -135,7 +136,15 @@ public class UserService {
         user.setLastLoginAt(LocalDateTime.now());
     }
 
-    public UserResponseDto getCurrentUser(UUID id) {
+    public UserResponseDto getCurrentUser(UUID id, String currentUsername) {
+        User currentUser = getUserByUsername(currentUsername);
+        boolean isAdmin = currentUser.getAuthorities().stream()
+                .anyMatch(authority -> "ADMIN".equals(authority.getAuthority()));
+
+        if (!isAdmin && !currentUser.getId().equals(id)) {
+            throw new AccessDeniedException("You are not allowed to access this user");
+        }
+
         User user = userRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 

@@ -4,6 +4,7 @@ import com.mayis.auth_service.dto.ChangePasswordRequestDto;
 import com.mayis.auth_service.dto.UserResponseDto;
 import com.mayis.auth_service.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,8 +27,11 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public UserResponseDto getCurrentUserById(@PathVariable UUID id) {
-        return userService.getCurrentUser(id);
+    public UserResponseDto getCurrentUserById(
+            @PathVariable UUID id,
+            Authentication authentication
+    ) {
+        return userService.getCurrentUser(id, authentication.getName());
     }
 
     @PatchMapping("/{userId}/change-password")
