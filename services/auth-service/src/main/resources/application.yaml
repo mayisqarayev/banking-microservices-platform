@@ -27,6 +27,8 @@ logging:
 
 jwt:
   secret: 8f3d9f4c7e8a1b2c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8
+  issuer: auth-service
+  audience: banking-core-platform
   access-token-expiration: 900000
   refresh-token-expiration: 604800000
 

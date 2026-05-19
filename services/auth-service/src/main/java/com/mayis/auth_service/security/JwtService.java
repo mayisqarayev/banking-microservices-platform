@@ -1,6 +1,7 @@
 package com.mayis.auth_service.security;
 
 import com.mayis.auth_service.config.properties.JwtProperties;
+import com.mayis.auth_service.model.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class JwtService {
@@ -26,10 +28,24 @@ public class JwtService {
                 now.getTime() + jwtProperties.getAccessTokenExpiration()
         );
 
-        return Jwts.builder()
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(authority -> authority.getAuthority())
+                .toList();
+
+        var builder = Jwts.builder()
                 .subject(userDetails.getUsername())
+                .claim("type", "access")
+                .claim("roles", roles)
                 .issuedAt(now)
                 .expiration(expiration)
+                .issuer(jwtProperties.getIssuer())
+                .audience().add(jwtProperties.getAudience()).and();
+
+        if (userDetails instanceof User user) {
+            builder.claim("userId", user.getId().toString());
+        }
+
+        return builder
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -43,6 +59,8 @@ public class JwtService {
                 .claim("type", "refresh")
                 .issuedAt(now)
                 .expiration(expiration)
+                .issuer(jwtProperties.getIssuer())
+                .audience().add(jwtProperties.getAudience()).and()
                 .signWith(getSigningKey())
                 .compact();
     }
