@@ -26,6 +26,11 @@ public class UserController {
         return userService.getAll();
     }
 
+    @GetMapping("/me")
+    public UserResponseDto getCurrentAuthenticatedUser(Authentication authentication) {
+        return userService.getCurrentAuthenticatedUser(authentication.getName());
+    }
+
     @GetMapping("/{id}")
     public UserResponseDto getCurrentUserById(
             @PathVariable UUID id,

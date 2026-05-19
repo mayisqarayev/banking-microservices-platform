@@ -184,6 +184,11 @@ public class UserService {
         user.setLastLoginAt(LocalDateTime.now());
     }
 
+    public UserResponseDto getCurrentAuthenticatedUser(String currentUsername) {
+        User user = getUserByUsername(currentUsername);
+        return mapToUserResponse(user);
+    }
+
     public UserResponseDto getCurrentUser(UUID id, String currentUsername) {
         User currentUser = getUserByUsername(currentUsername);
         boolean isAdmin = currentUser.getAuthorities().stream()
@@ -196,6 +201,17 @@ public class UserService {
         User user = userRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
+        return mapToUserResponse(user);
+    }
+
+    public List<UserResponseDto> getAll() {
+        return userRepository.findAllByDeletedFalse()
+                .stream()
+                .map(this::mapToUserResponse)
+                .toList();
+    }
+
+    private UserResponseDto mapToUserResponse(User user) {
         return new UserResponseDto(
                 user.getId(),
                 user.getUsername(),
@@ -207,23 +223,5 @@ public class UserService {
                         .map(userRole -> userRole.getRole().getAuthority())
                         .collect(Collectors.toSet())
         );
-    }
-
-    public List<UserResponseDto> getAll() {
-        return userRepository.findAllByDeletedFalse()
-                .stream()
-                .map(i -> {
-                    return new UserResponseDto(
-                            i.getId(),
-                            i.getUsername(),
-                            i.getEmail(),
-                            i.getFirstName(),
-                            i.getLastName(),
-                            i.getStatus(),
-                            i.getRoles().stream()
-                                    .map(userRole -> userRole.getRole().getAuthority())
-                                    .collect(Collectors.toSet())
-                    );
-                }).toList();
     }
 }
