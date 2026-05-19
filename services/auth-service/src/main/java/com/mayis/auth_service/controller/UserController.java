@@ -1,7 +1,9 @@
 package com.mayis.auth_service.controller;
 
+import com.mayis.auth_service.dto.AssignRoleRequestDto;
 import com.mayis.auth_service.dto.ChangePasswordRequestDto;
 import com.mayis.auth_service.dto.UserResponseDto;
+import com.mayis.auth_service.model.enums.RoleName;
 import com.mayis.auth_service.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
@@ -64,5 +66,23 @@ public class UserController {
     @PreAuthorize("hasAuthority('ADMIN')")
     public void restoreUser(@PathVariable UUID userId) {
         userService.restoreUser(userId);
+    }
+
+    @PostMapping("/{userId}/roles")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void assignRole(
+            @PathVariable UUID userId,
+            @Valid @RequestBody AssignRoleRequestDto request
+    ) {
+        userService.assignRole(userId, request);
+    }
+
+    @DeleteMapping("/{userId}/roles/{role}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void removeRole(
+            @PathVariable UUID userId,
+            @PathVariable RoleName role
+    ) {
+        userService.removeRole(userId, role);
     }
 }

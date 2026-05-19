@@ -1,17 +1,21 @@
 package com.mayis.auth_service.service;
 
 import com.mayis.auth_service.config.properties.AuthSecurityProperties;
-import com.mayis.auth_service.exception.AccessDeniedException;
 import com.mayis.auth_service.dto.ChangePasswordRequestDto;
+import com.mayis.auth_service.dto.AssignRoleRequestDto;
 import com.mayis.auth_service.dto.RegisterRequestDto;
 import com.mayis.auth_service.dto.UserResponseDto;
+import com.mayis.auth_service.exception.AccessDeniedException;
 import com.mayis.auth_service.exception.InvalidUserStateException;
 import com.mayis.auth_service.exception.UserAlreadyDeletedException;
 import com.mayis.auth_service.exception.UserAlreadyRestoredException;
+import com.mayis.auth_service.exception.UserRoleAlreadyExistsException;
 import com.mayis.auth_service.exception.UserAlreadyUnlockedException;
 import com.mayis.auth_service.exception.UserAlreadyExistsException;
 import com.mayis.auth_service.exception.UserNotFoundException;
+import com.mayis.auth_service.model.entity.Role;
 import com.mayis.auth_service.model.entity.User;
+import com.mayis.auth_service.model.enums.RoleName;
 import com.mayis.auth_service.model.enums.UserStatus;
 import com.mayis.auth_service.repository.UserRepository;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -30,11 +34,21 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthSecurityProperties authSecurityProperties;
+    private final RoleService roleService;
+    private final UserRoleService userRoleService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthSecurityProperties authSecurityProperties) {
+    public UserService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            AuthSecurityProperties authSecurityProperties,
+            RoleService roleService,
+            UserRoleService userRoleService
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authSecurityProperties = authSecurityProperties;
+        this.roleService = roleService;
+        this.userRoleService = userRoleService;
     }
 
     protected User createUser(RegisterRequestDto requestDto) {
@@ -187,6 +201,26 @@ public class UserService {
     public UserResponseDto getCurrentAuthenticatedUser(String currentUsername) {
         User user = getUserByUsername(currentUsername);
         return mapToUserResponse(user);
+    }
+
+    @Transactional
+    public void assignRole(UUID userId, AssignRoleRequestDto request) {
+        User user = getUserById(userId);
+        Role role = roleService.getRoleByName(request.role());
+
+        if (userRoleService.exists(user.getId(), role.getId())) {
+            throw new UserRoleAlreadyExistsException("User already has this role");
+        }
+
+        userRoleService.create(new CreateUserRoleRequestDto(user.getId(), role.getId()));
+    }
+
+    @Transactional
+    public void removeRole(UUID userId, RoleName roleName) {
+        User user = getUserById(userId);
+        Role role = roleService.getRoleByName(roleName);
+
+        userRoleService.delete(user.getId(), role.getId());
     }
 
     public UserResponseDto getCurrentUser(UUID id, String currentUsername) {
