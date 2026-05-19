@@ -1,5 +1,6 @@
 package com.mayis.auth_service.security;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -40,7 +42,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(BEARER_PREFIX.length());
-        String username = jwtService.extractUsername(token);
+        final String username;
+        try {
+            username = jwtService.extractUsername(token);
+        } catch (JwtException | IllegalArgumentException exception) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            response.getWriter().write("""
+                    {"message":"Invalid access token"}
+                    """);
+            return;
+        }
 
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
