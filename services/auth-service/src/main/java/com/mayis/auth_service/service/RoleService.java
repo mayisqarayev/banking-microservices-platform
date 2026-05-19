@@ -6,6 +6,7 @@ import com.mayis.auth_service.model.enums.RoleName;
 import com.mayis.auth_service.repository.RoleRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -25,5 +26,12 @@ public class RoleService {
     protected Role getRoleById(UUID id) {
         return roleRepository.findById(id)
                 .orElseThrow(() -> new RoleNotFoundException("Role not found"));
+    }
+
+    public List<RoleName> getAll() {
+        return roleRepository.findAllByDeletedFalse()
+                .stream()
+                .map(Role::getName)
+                .toList();
     }
 }
