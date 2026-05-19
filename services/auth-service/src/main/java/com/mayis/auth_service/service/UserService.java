@@ -6,14 +6,7 @@ import com.mayis.auth_service.dto.ChangePasswordRequestDto;
 import com.mayis.auth_service.dto.CreateUserRoleRequestDto;
 import com.mayis.auth_service.dto.RegisterRequestDto;
 import com.mayis.auth_service.dto.UserResponseDto;
-import com.mayis.auth_service.exception.AccessDeniedException;
-import com.mayis.auth_service.exception.InvalidUserStateException;
-import com.mayis.auth_service.exception.UserAlreadyDeletedException;
-import com.mayis.auth_service.exception.UserAlreadyRestoredException;
-import com.mayis.auth_service.exception.UserRoleAlreadyExistsException;
-import com.mayis.auth_service.exception.UserAlreadyUnlockedException;
-import com.mayis.auth_service.exception.UserAlreadyExistsException;
-import com.mayis.auth_service.exception.UserNotFoundException;
+import com.mayis.auth_service.exception.*;
 import com.mayis.auth_service.model.entity.Role;
 import com.mayis.auth_service.model.entity.User;
 import com.mayis.auth_service.model.enums.RoleName;
@@ -91,6 +84,44 @@ public class UserService {
     }
 
     @Transactional
+    public void activateUser(UUID userID) {
+        User user = getUserById(userID);
+
+        if(user.getStatus() == UserStatus.ACTIVE && user.isEnabled()) {
+            throw new UserAlreadyActiveException("User is already active");
+        } else if(user.getStatus() == UserStatus.SUSPENDED || user.getStatus() == UserStatus.DELETED) {
+            throw new InvalidUserStateException("User is not in a valid state for activate");
+        }
+
+        user.setStatus(UserStatus.ACTIVE);
+        user.setEnabled(true);
+        user.setAccountNonLocked(true);
+        user.setAccountNonExpired(true);
+        user.setCredentialsNonExpired(true);
+
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void deactivateUser(UUID userID) {
+        User user = getUserById(userID);
+
+        if(user.getStatus() == UserStatus.INACTIVE && !user.isEnabled()) {
+            throw new UserAlreadyInactiveException("User is already inactive");
+        } else if(user.getStatus() == UserStatus.SUSPENDED || user.getStatus() == UserStatus.DELETED) {
+            throw new InvalidUserStateException("User is not in a valid state for deactivate");
+        }
+
+        user.setStatus(UserStatus.INACTIVE);
+        user.setEnabled(false);
+        user.setAccountNonLocked(true);
+        user.setAccountNonExpired(true);
+        user.setCredentialsNonExpired(true);
+
+        userRepository.save(user);
+    }
+
+    @Transactional
     public void unlockUser(UUID userId) {
         User user = getUserById(userId);
 
@@ -104,6 +135,8 @@ public class UserService {
         user.setAccountNonLocked(true);
         user.setAccountNonExpired(true);
         user.setCredentialsNonExpired(true);
+
+        userRepository.save(user);
     }
 
     @Transactional
@@ -123,6 +156,8 @@ public class UserService {
         user.setAccountNonLocked(false);
         user.setAccountNonExpired(false);
         user.setCredentialsNonExpired(false);
+
+        userRepository.save(user);
     }
 
     @Transactional
@@ -143,6 +178,8 @@ public class UserService {
         user.setAccountNonExpired(true);
         user.setCredentialsNonExpired(true);
         user.setFailedLoginAttempts(0);
+
+        userRepository.save(user);
     }
 
     @Transactional
@@ -177,6 +214,8 @@ public class UserService {
         user.setPassword(
                 passwordEncoder.encode(request.newPassword())
         );
+
+        userRepository.save(user);
     }
 
     @Transactional
@@ -190,6 +229,8 @@ public class UserService {
                         user.setStatus(UserStatus.SUSPENDED);
                         user.setAccountNonLocked(false);
                     }
+
+                    userRepository.save(user);
                 });
     }
 
@@ -197,6 +238,8 @@ public class UserService {
     protected void handleSuccessfulLogin(User user) {
         user.setFailedLoginAttempts(0);
         user.setLastLoginAt(LocalDateTime.now());
+
+        userRepository.save(user);
     }
 
     public UserResponseDto getCurrentAuthenticatedUser(String currentUsername) {

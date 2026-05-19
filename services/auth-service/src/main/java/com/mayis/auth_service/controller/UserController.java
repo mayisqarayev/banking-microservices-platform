@@ -85,4 +85,16 @@ public class UserController {
     ) {
         userService.removeRole(userId, role);
     }
+
+    @PatchMapping("/{userId}/deactivate")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void deactivateUser(@PathVariable UUID userId) {
+        userService.deactivateUser(userId);
+    }
+
+    @PatchMapping("/{userId}/activate")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void activateUser(@PathVariable UUID userId) {
+        userService.activateUser(userId);
+    }
 }
