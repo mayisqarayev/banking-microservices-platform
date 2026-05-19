@@ -15,6 +15,7 @@ build/
 
 # Environment
 .env
+CODEX.md
 
 # OS
 Thumbs.db
