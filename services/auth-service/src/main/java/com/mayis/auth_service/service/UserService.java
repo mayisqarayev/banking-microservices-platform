@@ -1,8 +1,9 @@
 package com.mayis.auth_service.service;
 
 import com.mayis.auth_service.config.properties.AuthSecurityProperties;
-import com.mayis.auth_service.dto.ChangePasswordRequestDto;
 import com.mayis.auth_service.dto.AssignRoleRequestDto;
+import com.mayis.auth_service.dto.ChangePasswordRequestDto;
+import com.mayis.auth_service.dto.CreateUserRoleRequestDto;
 import com.mayis.auth_service.dto.RegisterRequestDto;
 import com.mayis.auth_service.dto.UserResponseDto;
 import com.mayis.auth_service.exception.AccessDeniedException;
