@@ -72,20 +72,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(UserAlreadyUnlockedException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleUserAlreadyUnlockedException(
-            UserAlreadyUnlockedException exception,
-            HttpServletRequest request
-    ) {
-        return buildErrorResponse(
-                HttpStatus.CONFLICT,
-                exception.getMessage(),
-                request.getRequestURI(),
-                null
-        );
-    }
-
     @ExceptionHandler(UserAlreadyDeletedException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleUserAlreadyDeletedException(
@@ -100,10 +86,38 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(UserAlreadySuspendedException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleUserAlreadySuspendedException(
+            UserAlreadySuspendedException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
     @ExceptionHandler(UserAlreadyRestoredException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleUserAlreadyRestoredException(
             UserAlreadyRestoredException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
+    @ExceptionHandler(UserNotSuspendedException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleUserNotSuspendedException(
+            UserNotSuspendedException exception,
             HttpServletRequest request
     ) {
         return buildErrorResponse(

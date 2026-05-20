@@ -116,19 +116,45 @@ public class UserService {
     }
 
     @Transactional
-    public void unlockUser(UUID userId) {
-        User user = getUserById(userId);
+    public void suspendUser(UUID userId, String actorUsername) {
+        User actor = getUserByUsername(actorUsername);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        if (user.isAccountNonLocked()) {
-            throw new UserAlreadyUnlockedException("User is already unlocked");
+        if (user.getId().equals(actor.getId())) {
+            throw new SameUserOperationException("Admin cannot suspend himself");
+        }
+
+        if (user.isDeleted() || user.getStatus() == UserStatus.DELETED) {
+            throw new InvalidUserStateException("User is not in a valid state for suspend");
+        }
+
+        if (user.getStatus() == UserStatus.SUSPENDED) {
+            throw new UserAlreadySuspendedException("User is already suspended");
+        }
+
+        user.setStatus(UserStatus.SUSPENDED);
+        user.setAccountNonLocked(false);
+
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void unsuspendUser(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        if (user.isDeleted() || user.getStatus() == UserStatus.DELETED) {
+            throw new InvalidUserStateException("User is not in a valid state for unsuspend");
+        }
+
+        if (user.getStatus() != UserStatus.SUSPENDED) {
+            throw new UserNotSuspendedException("User is not suspended");
         }
 
         user.setFailedLoginAttempts(0);
-        user.setStatus(UserStatus.ACTIVE);
-        user.setEnabled(true);
         user.setAccountNonLocked(true);
-        user.setAccountNonExpired(true);
-        user.setCredentialsNonExpired(true);
+        user.setStatus(UserStatus.ACTIVE);
 
         userRepository.save(user);
     }

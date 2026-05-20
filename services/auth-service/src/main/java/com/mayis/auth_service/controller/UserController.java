@@ -51,12 +51,6 @@ public class UserController {
         userService.changePassword(userId, request, authentication.getName());
     }
 
-    @PatchMapping("/{userId}/unlock")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public void unlockUser(@PathVariable UUID userId) {
-        userService.unlockUser(userId);
-    }
-
     @DeleteMapping("/{userId}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public void deleteUser(
@@ -100,5 +94,20 @@ public class UserController {
     @PreAuthorize("hasAuthority('ADMIN')")
     public void activateUser(@PathVariable UUID userId) {
         userService.activateUser(userId);
+    }
+
+    @PatchMapping("/{userId}/suspend")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void suspendUser(
+            @PathVariable UUID userId,
+            Authentication authentication
+    ) {
+        userService.suspendUser(userId, authentication.getName());
+    }
+
+    @PatchMapping("/{userId}/unsuspend")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void unsuspendUser(@PathVariable UUID userId) {
+        userService.unsuspendUser(userId);
     }
 }
