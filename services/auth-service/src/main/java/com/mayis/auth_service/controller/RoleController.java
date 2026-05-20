@@ -2,6 +2,7 @@ package com.mayis.auth_service.controller;
 
 import com.mayis.auth_service.model.enums.RoleName;
 import com.mayis.auth_service.service.RoleService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +20,7 @@ public class RoleController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public List<RoleName> getAll() {
         return roleService.getAll();
     }

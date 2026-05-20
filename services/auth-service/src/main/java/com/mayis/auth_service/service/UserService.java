@@ -87,17 +87,14 @@ public class UserService {
     public void activateUser(UUID userID) {
         User user = getUserById(userID);
 
-        if(user.getStatus() == UserStatus.ACTIVE && user.isEnabled()) {
+        if (user.getStatus() == UserStatus.ACTIVE && user.isEnabled()) {
             throw new UserAlreadyActiveException("User is already active");
-        } else if(user.getStatus() == UserStatus.SUSPENDED || user.getStatus() == UserStatus.DELETED) {
+        } else if (user.getStatus() == UserStatus.SUSPENDED || user.getStatus() == UserStatus.DELETED) {
             throw new InvalidUserStateException("User is not in a valid state for activate");
         }
 
         user.setStatus(UserStatus.ACTIVE);
         user.setEnabled(true);
-        user.setAccountNonLocked(true);
-        user.setAccountNonExpired(true);
-        user.setCredentialsNonExpired(true);
 
         userRepository.save(user);
     }
@@ -106,17 +103,14 @@ public class UserService {
     public void deactivateUser(UUID userID) {
         User user = getUserById(userID);
 
-        if(user.getStatus() == UserStatus.INACTIVE && !user.isEnabled()) {
+        if (user.getStatus() == UserStatus.INACTIVE && !user.isEnabled()) {
             throw new UserAlreadyInactiveException("User is already inactive");
-        } else if(user.getStatus() == UserStatus.SUSPENDED || user.getStatus() == UserStatus.DELETED) {
+        } else if (user.getStatus() == UserStatus.SUSPENDED || user.getStatus() == UserStatus.DELETED) {
             throw new InvalidUserStateException("User is not in a valid state for deactivate");
         }
 
         user.setStatus(UserStatus.INACTIVE);
         user.setEnabled(false);
-        user.setAccountNonLocked(true);
-        user.setAccountNonExpired(true);
-        user.setCredentialsNonExpired(true);
 
         userRepository.save(user);
     }
