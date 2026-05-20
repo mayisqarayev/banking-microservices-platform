@@ -44,6 +44,20 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(SameUserOperationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleSameUserOperationException(
+            SameUserOperationException exception,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+
     @ExceptionHandler(UserAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleUserAlreadyExistsException(

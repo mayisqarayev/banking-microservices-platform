@@ -59,8 +59,11 @@ public class UserController {
 
     @DeleteMapping("/{userId}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public void deleteUser(@PathVariable UUID userId) {
-        userService.softDeleteUser(userId);
+    public void deleteUser(
+            @PathVariable UUID userId,
+            Authentication authentication
+    ) {
+        userService.softDeleteUser(userId, authentication.getName());
     }
 
     @PatchMapping("/{userId}/restore")

@@ -134,7 +134,8 @@ public class UserService {
     }
 
     @Transactional
-    public void softDeleteUser(UUID userId) {
+    public void softDeleteUser(UUID userId, String actorUsername) {
+        User actor = getUserByUsername(actorUsername);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
@@ -142,9 +143,14 @@ public class UserService {
             throw new UserAlreadyDeletedException("User is already deleted");
         }
 
+        if (user.getId().equals(actor.getId())) {
+            throw new SameUserOperationException("Admin cannot delete himself");
+        }
+
         user.setDeleted(true);
         user.setStatus(UserStatus.DELETED);
         user.setDeletedAt(LocalDateTime.now());
+        user.setDeletedBy(actor.getId());
         user.setFailedLoginAttempts(0);
         user.setEnabled(false);
         user.setAccountNonLocked(false);
