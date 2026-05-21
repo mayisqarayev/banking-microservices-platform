@@ -9,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Collection;
 import java.util.Set;
 import java.util.UUID;
@@ -59,7 +60,7 @@ public class User extends SoftDeletableEntity implements UserDetails {
     private LocalDateTime lastLoginAt;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-    private Set<UserRole> roles;
+    private Set<UserRole> roles = new HashSet<>();
 
     @PrePersist
     public void prePersist() {

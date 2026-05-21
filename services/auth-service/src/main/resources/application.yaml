@@ -2,6 +2,12 @@ spring:
   application:
     name: auth-service
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
   datasource:
     url: jdbc:postgresql://localhost:5440/auth_db
     username: auth_user
@@ -35,6 +41,11 @@ jwt:
 auth:
   security:
     max-failed-login-attempts: 5
+
+app:
+  kafka:
+    topics:
+      user-registered: user.registered
 
 server:
   port: 8081

@@ -12,9 +12,11 @@ import com.mayis.auth_service.model.entity.User;
 import com.mayis.auth_service.model.enums.RoleName;
 import com.mayis.auth_service.model.enums.UserStatus;
 import com.mayis.auth_service.repository.UserRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -36,7 +38,7 @@ public class UserService {
             PasswordEncoder passwordEncoder,
             AuthSecurityProperties authSecurityProperties,
             RoleService roleService,
-            UserRoleService userRoleService
+            @Lazy UserRoleService userRoleService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -244,7 +246,7 @@ public class UserService {
         userRepository.save(user);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     protected void handleFailedLogin(String username) {
         userRepository.findByUsernameAndDeletedFalse(username)
                 .ifPresent(user -> {

@@ -2,6 +2,8 @@ package com.mayis.auth_service.service;
 
 import com.mayis.auth_service.dto.*;
 import com.mayis.auth_service.exception.InvalidTokenTypeException;
+import com.mayis.auth_service.event.UserEventPublisher;
+import com.mayis.auth_service.event.UserRegisteredEvent;
 import com.mayis.auth_service.model.entity.RefreshToken;
 import com.mayis.auth_service.model.entity.Role;
 import com.mayis.auth_service.model.entity.User;
@@ -14,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -24,14 +28,24 @@ public class AuthService {
     private final RoleService roleService;
     private final UserRoleService userRoleService;
     private final RefreshTokenService refreshTokenService;
+    private final UserEventPublisher userEventPublisher;
 
-    public AuthService(JwtService jwtService, AuthenticationManager authenticationManager, UserService userService, RoleService roleService, UserRoleService userRoleService, RefreshTokenService refreshTokenService) {
+    public AuthService(
+            JwtService jwtService,
+            AuthenticationManager authenticationManager,
+            UserService userService,
+            RoleService roleService,
+            UserRoleService userRoleService,
+            RefreshTokenService refreshTokenService,
+            UserEventPublisher userEventPublisher
+    ) {
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.userService = userService;
         this.roleService = roleService;
         this.userRoleService = userRoleService;
         this.refreshTokenService = refreshTokenService;
+        this.userEventPublisher = userEventPublisher;
     }
 
     @Transactional
@@ -43,10 +57,23 @@ public class AuthService {
                 user.getId(),
                 customerRole.getId()
         ));
+        User registeredUser = userService.getUserByUsername(user.getUsername());
+        userEventPublisher.publishUserRegistered(
+                new UserRegisteredEvent(
+                        UUID.randomUUID(),
+                        LocalDateTime.now(),
+                        registeredUser.getId(),
+                        registeredUser.getUsername(),
+                        registeredUser.getEmail(),
+                        registeredUser.getFirstName(),
+                        registeredUser.getLastName(),
+                        Set.of(customerRole.getAuthority())
+                )
+        );
 
-        String accessToken = jwtService.generateAccessToken(user);
+        String accessToken = jwtService.generateAccessToken(registeredUser);
         String refreshToken = refreshTokenService.generateRefreshToken(new GenerateRefreshTokenRequestDto(
-                user.getId()
+                registeredUser.getId()
         ));
 
         return new AuthResponseDto(
