@@ -51,6 +51,12 @@ public class UserController {
         userService.changePassword(userId, request, authentication.getName());
     }
 
+    @PatchMapping("/{userId}/reset-password")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public void resetPasswordByAdmin(@PathVariable UUID userId) {
+        userService.resetPasswordByAdmin(userId);
+    }
+
     @DeleteMapping("/{userId}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public void deleteUser(

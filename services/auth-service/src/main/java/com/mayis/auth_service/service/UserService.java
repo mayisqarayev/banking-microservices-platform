@@ -36,6 +36,8 @@ import java.util.stream.Collectors;
 @Service
 public class UserService {
 
+    private static final String DEFAULT_RESET_PASSWORD = "omerbambiliydi";
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthSecurityProperties authSecurityProperties;
@@ -294,6 +296,16 @@ public class UserService {
         user.setPassword(
                 passwordEncoder.encode(request.newPassword())
         );
+
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void resetPasswordByAdmin(UUID userId) {
+        User user = getUserById(userId);
+
+        user.setPassword(passwordEncoder.encode(DEFAULT_RESET_PASSWORD));
+        user.setCredentialsNonExpired(true);
 
         userRepository.save(user);
     }
