@@ -280,20 +280,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleGenericException(
-            Exception exception,
-            HttpServletRequest request
-    ) {
-        return buildErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Unexpected system error",
-                request.getRequestURI(),
-                null
-        );
-    }
-
     @ExceptionHandler(LockedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse handleLocked(
