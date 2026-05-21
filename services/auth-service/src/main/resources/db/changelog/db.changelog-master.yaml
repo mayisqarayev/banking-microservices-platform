@@ -17,3 +17,9 @@ databaseChangeLog:
       changes:
         - sqlFile:
             path: db/changelog/sql/003-drop-refresh-token-deleted-by.sql
+  - changeSet:
+      id: 004-seed-default-admin-user
+      author: qarayevmayis
+      changes:
+        - sqlFile:
+            path: db/changelog/sql/004-seed-default-admin-user.sql
