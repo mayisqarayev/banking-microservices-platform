@@ -62,38 +62,49 @@ public class UserController {
 
     @PatchMapping("/{userId}/restore")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public void restoreUser(@PathVariable UUID userId) {
-        userService.restoreUser(userId);
+    public void restoreUser(
+            @PathVariable UUID userId,
+            Authentication authentication
+    ) {
+        userService.restoreUser(userId, authentication.getName());
     }
 
     @PostMapping("/{userId}/roles")
     @PreAuthorize("hasAuthority('ADMIN')")
     public void assignRole(
             @PathVariable UUID userId,
-            @Valid @RequestBody AssignRoleRequestDto request
+            @Valid @RequestBody AssignRoleRequestDto request,
+            Authentication authentication
     ) {
-        userService.assignRole(userId, request);
+        userService.assignRole(userId, request, authentication.getName());
     }
 
     @DeleteMapping("/{userId}/roles/{role}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public void removeRole(
             @PathVariable UUID userId,
-            @PathVariable RoleName role
+            @PathVariable RoleName role,
+            Authentication authentication
     ) {
-        userService.removeRole(userId, role);
+        userService.removeRole(userId, role, authentication.getName());
     }
 
     @PatchMapping("/{userId}/deactivate")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public void deactivateUser(@PathVariable UUID userId) {
-        userService.deactivateUser(userId);
+    public void deactivateUser(
+            @PathVariable UUID userId,
+            Authentication authentication
+    ) {
+        userService.deactivateUser(userId, authentication.getName());
     }
 
     @PatchMapping("/{userId}/activate")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public void activateUser(@PathVariable UUID userId) {
-        userService.activateUser(userId);
+    public void activateUser(
+            @PathVariable UUID userId,
+            Authentication authentication
+    ) {
+        userService.activateUser(userId, authentication.getName());
     }
 
     @PatchMapping("/{userId}/suspend")
@@ -107,7 +118,10 @@ public class UserController {
 
     @PatchMapping("/{userId}/unsuspend")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public void unsuspendUser(@PathVariable UUID userId) {
-        userService.unsuspendUser(userId);
+    public void unsuspendUser(
+            @PathVariable UUID userId,
+            Authentication authentication
+    ) {
+        userService.unsuspendUser(userId, authentication.getName());
     }
 }

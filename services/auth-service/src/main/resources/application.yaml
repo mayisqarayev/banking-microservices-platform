@@ -46,6 +46,14 @@ app:
   kafka:
     topics:
       user-registered: user.registered
+      user-role-assigned: user.role.assigned
+      user-role-removed: user.role.removed
+      user-deleted: user.deleted
+      user-suspended: user.suspended
+      user-restored: user.restored
+      user-activated: user.activated
+      user-deactivated: user.deactivated
+      user-unsuspended: user.unsuspended
 
 server:
   port: 8081

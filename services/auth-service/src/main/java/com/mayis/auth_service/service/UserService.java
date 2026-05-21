@@ -6,6 +6,15 @@ import com.mayis.auth_service.dto.ChangePasswordRequestDto;
 import com.mayis.auth_service.dto.CreateUserRoleRequestDto;
 import com.mayis.auth_service.dto.RegisterRequestDto;
 import com.mayis.auth_service.dto.UserResponseDto;
+import com.mayis.auth_service.event.UserActivatedEvent;
+import com.mayis.auth_service.event.UserDeactivatedEvent;
+import com.mayis.auth_service.event.UserDeletedEvent;
+import com.mayis.auth_service.event.UserEventPublisher;
+import com.mayis.auth_service.event.UserRestoredEvent;
+import com.mayis.auth_service.event.UserRoleAssignedEvent;
+import com.mayis.auth_service.event.UserRoleRemovedEvent;
+import com.mayis.auth_service.event.UserSuspendedEvent;
+import com.mayis.auth_service.event.UserUnsuspendedEvent;
 import com.mayis.auth_service.exception.*;
 import com.mayis.auth_service.model.entity.Role;
 import com.mayis.auth_service.model.entity.User;
@@ -32,19 +41,22 @@ public class UserService {
     private final AuthSecurityProperties authSecurityProperties;
     private final RoleService roleService;
     private final UserRoleService userRoleService;
+    private final UserEventPublisher userEventPublisher;
 
     public UserService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             AuthSecurityProperties authSecurityProperties,
             RoleService roleService,
-            @Lazy UserRoleService userRoleService
+            @Lazy UserRoleService userRoleService,
+            UserEventPublisher userEventPublisher
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authSecurityProperties = authSecurityProperties;
         this.roleService = roleService;
         this.userRoleService = userRoleService;
+        this.userEventPublisher = userEventPublisher;
     }
 
     protected User createUser(RegisterRequestDto requestDto) {
@@ -86,7 +98,8 @@ public class UserService {
     }
 
     @Transactional
-    public void activateUser(UUID userID) {
+    public void activateUser(UUID userID, String actorUsername) {
+        User actor = getUserByUsername(actorUsername);
         User user = getUserById(userID);
 
         if (user.getStatus() == UserStatus.ACTIVE && user.isEnabled()) {
@@ -99,10 +112,17 @@ public class UserService {
         user.setEnabled(true);
 
         userRepository.save(user);
+        userEventPublisher.publishUserActivated(new UserActivatedEvent(
+                UUID.randomUUID(),
+                LocalDateTime.now(),
+                actor.getId(),
+                user.getId()
+        ));
     }
 
     @Transactional
-    public void deactivateUser(UUID userID) {
+    public void deactivateUser(UUID userID, String actorUsername) {
+        User actor = getUserByUsername(actorUsername);
         User user = getUserById(userID);
 
         if (user.getStatus() == UserStatus.INACTIVE && !user.isEnabled()) {
@@ -115,6 +135,12 @@ public class UserService {
         user.setEnabled(false);
 
         userRepository.save(user);
+        userEventPublisher.publishUserDeactivated(new UserDeactivatedEvent(
+                UUID.randomUUID(),
+                LocalDateTime.now(),
+                actor.getId(),
+                user.getId()
+        ));
     }
 
     @Transactional
@@ -139,10 +165,17 @@ public class UserService {
         user.setAccountNonLocked(false);
 
         userRepository.save(user);
+        userEventPublisher.publishUserSuspended(new UserSuspendedEvent(
+                UUID.randomUUID(),
+                LocalDateTime.now(),
+                actor.getId(),
+                user.getId()
+        ));
     }
 
     @Transactional
-    public void unsuspendUser(UUID userId) {
+    public void unsuspendUser(UUID userId, String actorUsername) {
+        User actor = getUserByUsername(actorUsername);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
@@ -159,6 +192,12 @@ public class UserService {
         user.setStatus(UserStatus.ACTIVE);
 
         userRepository.save(user);
+        userEventPublisher.publishUserUnsuspended(new UserUnsuspendedEvent(
+                UUID.randomUUID(),
+                LocalDateTime.now(),
+                actor.getId(),
+                user.getId()
+        ));
     }
 
     @Transactional
@@ -186,10 +225,17 @@ public class UserService {
         user.setCredentialsNonExpired(false);
 
         userRepository.save(user);
+        userEventPublisher.publishUserDeleted(new UserDeletedEvent(
+                UUID.randomUUID(),
+                LocalDateTime.now(),
+                actor.getId(),
+                user.getId()
+        ));
     }
 
     @Transactional
-    public void restoreUser(UUID userId) {
+    public void restoreUser(UUID userId, String actorUsername) {
+        User actor = getUserByUsername(actorUsername);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
@@ -208,6 +254,12 @@ public class UserService {
         user.setFailedLoginAttempts(0);
 
         userRepository.save(user);
+        userEventPublisher.publishUserRestored(new UserRestoredEvent(
+                UUID.randomUUID(),
+                LocalDateTime.now(),
+                actor.getId(),
+                user.getId()
+        ));
     }
 
     @Transactional
@@ -276,7 +328,8 @@ public class UserService {
     }
 
     @Transactional
-    public void assignRole(UUID userId, AssignRoleRequestDto request) {
+    public void assignRole(UUID userId, AssignRoleRequestDto request, String actorUsername) {
+        User actor = getUserByUsername(actorUsername);
         User user = getUserById(userId);
         Role role = roleService.getRoleByName(request.role());
 
@@ -285,14 +338,29 @@ public class UserService {
         }
 
         userRoleService.create(new CreateUserRoleRequestDto(user.getId(), role.getId()));
+        userEventPublisher.publishUserRoleAssigned(new UserRoleAssignedEvent(
+                UUID.randomUUID(),
+                LocalDateTime.now(),
+                actor.getId(),
+                user.getId(),
+                request.role()
+        ));
     }
 
     @Transactional
-    public void removeRole(UUID userId, RoleName roleName) {
+    public void removeRole(UUID userId, RoleName roleName, String actorUsername) {
+        User actor = getUserByUsername(actorUsername);
         User user = getUserById(userId);
         Role role = roleService.getRoleByName(roleName);
 
         userRoleService.delete(user.getId(), role.getId());
+        userEventPublisher.publishUserRoleRemoved(new UserRoleRemovedEvent(
+                UUID.randomUUID(),
+                LocalDateTime.now(),
+                actor.getId(),
+                user.getId(),
+                roleName
+        ));
     }
 
     public UserResponseDto getCurrentUser(UUID id, String currentUsername) {

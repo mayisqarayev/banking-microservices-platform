@@ -10,4 +10,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class KafkaTopicProperties {
 
     private String userRegistered;
+    private String userRoleAssigned;
+    private String userRoleRemoved;
+    private String userDeleted;
+    private String userSuspended;
+    private String userRestored;
+    private String userActivated;
+    private String userDeactivated;
+    private String userUnsuspended;
 }
