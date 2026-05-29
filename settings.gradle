@@ -2,3 +2,4 @@ rootProject.name = 'banking-core-platform'
 
 include 'services:auth-service'
 include 'services:customer-service'
+include 'services:account-service'
