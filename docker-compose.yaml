@@ -25,6 +25,19 @@ services:
     volumes:
       - customer_db_data:/var/lib/postgresql/data
 
+  account-db:
+    image: postgres:16
+    container_name: account-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: account_db
+      POSTGRES_USER: account_user
+      POSTGRES_PASSWORD: account_password
+    ports:
+      - "5442:5432"
+    volumes:
+      - account_db_data:/var/lib/postgresql/data
+
   kafka:
     image: apache/kafka:latest
     container_name: kafka
@@ -61,3 +74,4 @@ services:
 volumes:
   auth_db_data:
   customer_db_data:
+  account_db_data:
