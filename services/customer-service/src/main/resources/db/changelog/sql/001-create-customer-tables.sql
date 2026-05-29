@@ -34,6 +34,7 @@ CREATE TABLE customer_documents (
                                     deleted_by UUID,
 
                                     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                    updated_at TIMESTAMP,
 
                                     CONSTRAINT fk_customer_documents_customer
                                         FOREIGN KEY (customer_id)
@@ -54,6 +55,9 @@ CREATE TABLE customer_addresses (
                                     deleted BOOLEAN NOT NULL DEFAULT FALSE,
                                     deleted_at TIMESTAMP,
                                     deleted_by UUID,
+
+                                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                    updated_at TIMESTAMP,
 
                                     CONSTRAINT fk_customer_addresses_customer
                                         FOREIGN KEY (customer_id)
