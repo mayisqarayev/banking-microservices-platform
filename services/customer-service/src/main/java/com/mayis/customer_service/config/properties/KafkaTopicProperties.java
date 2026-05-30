@@ -11,4 +11,6 @@ public class KafkaTopicProperties {
 
     private String userRegistered;
     private String customerCreated;
+    private String customerUpdated;
+    private String customerBlocked;
 }
