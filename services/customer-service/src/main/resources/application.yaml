@@ -45,6 +45,8 @@ app:
     topics:
       user-registered: user.registered
       customer-created: customer.created
+      customer-updated: customer.updated
+      customer-blocked: customer.blocked
 
 server:
   port: 8082
