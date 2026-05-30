@@ -3,8 +3,10 @@ package com.mayis.customer_service.service;
 import com.mayis.customer_service.dto.CreateCustomerRequestDto;
 import com.mayis.customer_service.dto.CustomerResponseDto;
 import com.mayis.customer_service.dto.UpdateCustomerRequestDto;
+import com.mayis.customer_service.event.CustomerBlockedEvent;
 import com.mayis.customer_service.event.CustomerCreatedEvent;
 import com.mayis.customer_service.event.CustomerEventPublisher;
+import com.mayis.customer_service.event.CustomerUpdatedEvent;
 import com.mayis.customer_service.event.UserRegisteredEvent;
 import com.mayis.customer_service.exception.CustomerAlreadyDeletedException;
 import com.mayis.customer_service.exception.CustomerAlreadyExistsException;
@@ -105,12 +107,16 @@ public class CustomerService {
         customer.setPhoneNumber(request.phoneNumber());
         customer.setStatus(resolveStatus(request.status()));
 
-        return mapToResponse(customerRepository.save(customer));
+        Customer savedCustomer = customerRepository.save(customer);
+        publishCustomerCreated(savedCustomer);
+
+        return mapToResponse(savedCustomer);
     }
 
     @Transactional
     public CustomerResponseDto update(UUID id, UpdateCustomerRequestDto request) {
         Customer customer = getActiveCustomerById(id);
+        CustomerStatus previousStatus = customer.getStatus();
 
         if (request.status() == CustomerStatus.CLOSED) {
             throw new InvalidCustomerStateException("Customer status cannot be updated to CLOSED from this endpoint");
@@ -128,7 +134,14 @@ public class CustomerService {
         customer.setPhoneNumber(request.phoneNumber());
         customer.setStatus(resolveStatus(request.status()));
 
-        return mapToResponse(customerRepository.save(customer));
+        Customer savedCustomer = customerRepository.save(customer);
+        publishCustomerUpdated(savedCustomer);
+
+        if (previousStatus != CustomerStatus.BLOCKED && savedCustomer.getStatus() == CustomerStatus.BLOCKED) {
+            publishCustomerBlocked(savedCustomer);
+        }
+
+        return mapToResponse(savedCustomer);
     }
 
     @Transactional
@@ -147,6 +160,52 @@ public class CustomerService {
 
     private String generateCif() {
         return "CIF-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private void publishCustomerCreated(Customer customer) {
+        customerEventPublisher.publishCustomerCreated(
+                new CustomerCreatedEvent(
+                        UUID.randomUUID(),
+                        LocalDateTime.now(),
+                        customer.getId(),
+                        customer.getUserId(),
+                        customer.getCif(),
+                        customer.getFirstName(),
+                        customer.getLastName(),
+                        customer.getEmail()
+                )
+        );
+    }
+
+    private void publishCustomerUpdated(Customer customer) {
+        customerEventPublisher.publishCustomerUpdated(
+                new CustomerUpdatedEvent(
+                        UUID.randomUUID(),
+                        LocalDateTime.now(),
+                        customer.getId(),
+                        customer.getUserId(),
+                        customer.getCif(),
+                        customer.getFirstName(),
+                        customer.getLastName(),
+                        customer.getEmail(),
+                        customer.getStatus().name()
+                )
+        );
+    }
+
+    private void publishCustomerBlocked(Customer customer) {
+        customerEventPublisher.publishCustomerBlocked(
+                new CustomerBlockedEvent(
+                        UUID.randomUUID(),
+                        LocalDateTime.now(),
+                        customer.getId(),
+                        customer.getUserId(),
+                        customer.getCif(),
+                        customer.getFirstName(),
+                        customer.getLastName(),
+                        customer.getEmail()
+                )
+        );
     }
 
     private Customer getActiveCustomerById(UUID id) {
