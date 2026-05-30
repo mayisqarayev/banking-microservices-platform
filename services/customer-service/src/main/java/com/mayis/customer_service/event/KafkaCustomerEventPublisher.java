@@ -34,4 +34,30 @@ public class KafkaCustomerEventPublisher implements CustomerEventPublisher {
             log.error("Failed to publish customer.created event for customerId={}", event.customerId(), exception);
         }
     }
+
+    @Override
+    public void publishCustomerUpdated(CustomerUpdatedEvent event) {
+        try {
+            kafkaTemplate.send(
+                    kafkaTopicProperties.getCustomerUpdated(),
+                    event.customerId().toString(),
+                    event
+            );
+        } catch (Exception exception) {
+            log.error("Failed to publish customer.updated event for customerId={}", event.customerId(), exception);
+        }
+    }
+
+    @Override
+    public void publishCustomerBlocked(CustomerBlockedEvent event) {
+        try {
+            kafkaTemplate.send(
+                    kafkaTopicProperties.getCustomerBlocked(),
+                    event.customerId().toString(),
+                    event
+            );
+        } catch (Exception exception) {
+            log.error("Failed to publish customer.blocked event for customerId={}", event.customerId(), exception);
+        }
+    }
 }
