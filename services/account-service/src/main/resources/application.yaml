@@ -32,6 +32,8 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "com.mayis.account_service.event"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: com.mayis.account_service.event.CustomerCreatedEvent
 
 logging:
   level:
