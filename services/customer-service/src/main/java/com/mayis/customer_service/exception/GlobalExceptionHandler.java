@@ -18,6 +18,11 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
+    @ExceptionHandler(CustomerDocumentNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleCustomerDocumentNotFound(CustomerDocumentNotFoundException exception) {
+        return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
     @ExceptionHandler({
             CustomerAlreadyExistsException.class,
             CustomerAlreadyDeletedException.class
@@ -28,6 +33,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidCustomerStateException.class)
     public ResponseEntity<Map<String, String>> handleInvalidState(InvalidCustomerStateException exception) {
+        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
+
+    @ExceptionHandler(InvalidCustomerDocumentException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidDocument(InvalidCustomerDocumentException exception) {
         return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
