@@ -34,4 +34,43 @@ public class KafkaAccountEventPublisher implements AccountEventPublisher {
             log.error("Failed to publish account.created event for accountId={}", event.accountId(), exception);
         }
     }
+
+    @Override
+    public void publishAccountBlocked(AccountBlockedEvent event) {
+        try {
+            kafkaTemplate.send(
+                    kafkaTopicProperties.getAccountBlocked(),
+                    event.accountId().toString(),
+                    event
+            );
+        } catch (Exception exception) {
+            log.error("Failed to publish account.blocked event for accountId={}", event.accountId(), exception);
+        }
+    }
+
+    @Override
+    public void publishAccountDebited(AccountDebitedEvent event) {
+        try {
+            kafkaTemplate.send(
+                    kafkaTopicProperties.getAccountDebited(),
+                    event.accountId().toString(),
+                    event
+            );
+        } catch (Exception exception) {
+            log.error("Failed to publish account.debited event for accountId={}", event.accountId(), exception);
+        }
+    }
+
+    @Override
+    public void publishAccountCredited(AccountCreditedEvent event) {
+        try {
+            kafkaTemplate.send(
+                    kafkaTopicProperties.getAccountCredited(),
+                    event.accountId().toString(),
+                    event
+            );
+        } catch (Exception exception) {
+            log.error("Failed to publish account.credited event for accountId={}", event.accountId(), exception);
+        }
+    }
 }
