@@ -70,19 +70,53 @@ public class CustomerService {
     public List<CustomerResponseDto> getAll() {
         return customerRepository.findAllByDeletedFalse()
                 .stream()
-                .map(this::mapToResponse)
+                .map(customer -> new CustomerResponseDto(
+                        customer.getId(),
+                        customer.getUserId(),
+                        customer.getCif(),
+                        customer.getFirstName(),
+                        customer.getLastName(),
+                        customer.getDateOfBirth(),
+                        customer.getGender(),
+                        customer.getEmail(),
+                        customer.getPhoneNumber(),
+                        customer.getStatus()
+                ))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public CustomerResponseDto getById(UUID id) {
-        return mapToResponse(getActiveCustomerById(id));
+        Customer customer = getActiveCustomerById(id);
+        return new CustomerResponseDto(
+                customer.getId(),
+                customer.getUserId(),
+                customer.getCif(),
+                customer.getFirstName(),
+                customer.getLastName(),
+                customer.getDateOfBirth(),
+                customer.getGender(),
+                customer.getEmail(),
+                customer.getPhoneNumber(),
+                customer.getStatus()
+        );
     }
 
     @Transactional(readOnly = true)
     public CustomerResponseDto getByUserId(UUID userId) {
         return customerRepository.findByUserIdAndDeletedFalse(userId)
-                .map(this::mapToResponse)
+                .map(customer -> new CustomerResponseDto(
+                        customer.getId(),
+                        customer.getUserId(),
+                        customer.getCif(),
+                        customer.getFirstName(),
+                        customer.getLastName(),
+                        customer.getDateOfBirth(),
+                        customer.getGender(),
+                        customer.getEmail(),
+                        customer.getPhoneNumber(),
+                        customer.getStatus()
+                ))
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
     }
 
@@ -105,12 +139,34 @@ public class CustomerService {
         customer.setGender(request.gender());
         customer.setEmail(request.email());
         customer.setPhoneNumber(request.phoneNumber());
-        customer.setStatus(resolveStatus(request.status()));
+        customer.setStatus(request.status() == null ? CustomerStatus.ACTIVE : request.status());
 
         Customer savedCustomer = customerRepository.save(customer);
-        publishCustomerCreated(savedCustomer);
+        customerEventPublisher.publishCustomerCreated(
+                new CustomerCreatedEvent(
+                        UUID.randomUUID(),
+                        LocalDateTime.now(),
+                        savedCustomer.getId(),
+                        savedCustomer.getUserId(),
+                        savedCustomer.getCif(),
+                        savedCustomer.getFirstName(),
+                        savedCustomer.getLastName(),
+                        savedCustomer.getEmail()
+                )
+        );
 
-        return mapToResponse(savedCustomer);
+        return new CustomerResponseDto(
+                savedCustomer.getId(),
+                savedCustomer.getUserId(),
+                savedCustomer.getCif(),
+                savedCustomer.getFirstName(),
+                savedCustomer.getLastName(),
+                savedCustomer.getDateOfBirth(),
+                savedCustomer.getGender(),
+                savedCustomer.getEmail(),
+                savedCustomer.getPhoneNumber(),
+                savedCustomer.getStatus()
+        );
     }
 
     @Transactional
@@ -132,16 +188,50 @@ public class CustomerService {
         customer.setGender(request.gender());
         customer.setEmail(request.email());
         customer.setPhoneNumber(request.phoneNumber());
-        customer.setStatus(resolveStatus(request.status()));
+        customer.setStatus(request.status() == null ? CustomerStatus.ACTIVE : request.status());
 
         Customer savedCustomer = customerRepository.save(customer);
-        publishCustomerUpdated(savedCustomer);
+        customerEventPublisher.publishCustomerUpdated(
+                new CustomerUpdatedEvent(
+                        UUID.randomUUID(),
+                        LocalDateTime.now(),
+                        savedCustomer.getId(),
+                        savedCustomer.getUserId(),
+                        savedCustomer.getCif(),
+                        savedCustomer.getFirstName(),
+                        savedCustomer.getLastName(),
+                        savedCustomer.getEmail(),
+                        savedCustomer.getStatus().name()
+                )
+        );
 
         if (previousStatus != CustomerStatus.BLOCKED && savedCustomer.getStatus() == CustomerStatus.BLOCKED) {
-            publishCustomerBlocked(savedCustomer);
+            customerEventPublisher.publishCustomerBlocked(
+                    new CustomerBlockedEvent(
+                            UUID.randomUUID(),
+                            LocalDateTime.now(),
+                            savedCustomer.getId(),
+                            savedCustomer.getUserId(),
+                            savedCustomer.getCif(),
+                            savedCustomer.getFirstName(),
+                            savedCustomer.getLastName(),
+                            savedCustomer.getEmail()
+                    )
+            );
         }
 
-        return mapToResponse(savedCustomer);
+        return new CustomerResponseDto(
+                savedCustomer.getId(),
+                savedCustomer.getUserId(),
+                savedCustomer.getCif(),
+                savedCustomer.getFirstName(),
+                savedCustomer.getLastName(),
+                savedCustomer.getDateOfBirth(),
+                savedCustomer.getGender(),
+                savedCustomer.getEmail(),
+                savedCustomer.getPhoneNumber(),
+                savedCustomer.getStatus()
+        );
     }
 
     @Transactional
@@ -162,73 +252,8 @@ public class CustomerService {
         return "CIF-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
-    private void publishCustomerCreated(Customer customer) {
-        customerEventPublisher.publishCustomerCreated(
-                new CustomerCreatedEvent(
-                        UUID.randomUUID(),
-                        LocalDateTime.now(),
-                        customer.getId(),
-                        customer.getUserId(),
-                        customer.getCif(),
-                        customer.getFirstName(),
-                        customer.getLastName(),
-                        customer.getEmail()
-                )
-        );
-    }
-
-    private void publishCustomerUpdated(Customer customer) {
-        customerEventPublisher.publishCustomerUpdated(
-                new CustomerUpdatedEvent(
-                        UUID.randomUUID(),
-                        LocalDateTime.now(),
-                        customer.getId(),
-                        customer.getUserId(),
-                        customer.getCif(),
-                        customer.getFirstName(),
-                        customer.getLastName(),
-                        customer.getEmail(),
-                        customer.getStatus().name()
-                )
-        );
-    }
-
-    private void publishCustomerBlocked(Customer customer) {
-        customerEventPublisher.publishCustomerBlocked(
-                new CustomerBlockedEvent(
-                        UUID.randomUUID(),
-                        LocalDateTime.now(),
-                        customer.getId(),
-                        customer.getUserId(),
-                        customer.getCif(),
-                        customer.getFirstName(),
-                        customer.getLastName(),
-                        customer.getEmail()
-                )
-        );
-    }
-
     private Customer getActiveCustomerById(UUID id) {
         return customerRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
-    }
-
-    private CustomerStatus resolveStatus(CustomerStatus status) {
-        return status == null ? CustomerStatus.ACTIVE : status;
-    }
-
-    private CustomerResponseDto mapToResponse(Customer customer) {
-        return new CustomerResponseDto(
-                customer.getId(),
-                customer.getUserId(),
-                customer.getCif(),
-                customer.getFirstName(),
-                customer.getLastName(),
-                customer.getDateOfBirth(),
-                customer.getGender(),
-                customer.getEmail(),
-                customer.getPhoneNumber(),
-                customer.getStatus()
-        );
     }
 }
