@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.mayis.customer_validation.grpc";
+option java_outer_classname = "CustomerValidationProto";
+
+package customer.validation.v1;
+
+service CustomerValidationService {
+  rpc GetCustomerValidation (GetCustomerValidationRequest) returns (CustomerValidationResponse);
+}
+
+message GetCustomerValidationRequest {
+  string customer_id = 1;
+}
+
+message CustomerValidationResponse {
+  string customer_id = 1;
+  string user_id = 2;
+  string status = 3;
+  bool deleted = 4;
+}
