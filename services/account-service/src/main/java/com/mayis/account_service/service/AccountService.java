@@ -59,8 +59,34 @@ public class AccountService {
             return;
         }
 
-        Account savedAccount = persistNewAccount(event.customerId(), AccountType.CURRENT, Currency.AZN);
-        publishAccountCreated(savedAccount);
+        Account account = new Account();
+        account.setCustomerId(event.customerId());
+        account.setAccountNumber(generateAccountNumber());
+        account.setIban(generateIban());
+        account.setAccountType(AccountType.CURRENT);
+        account.setCurrency(Currency.AZN);
+        account.setBalance(BigDecimal.ZERO);
+        account.setAvailableBalance(BigDecimal.ZERO);
+        account.setStatus(AccountStatus.ACTIVE);
+
+        Account savedAccount = accountRepository.save(account);
+        accountStatusHistoryService.record(savedAccount, null, AccountStatus.ACTIVE, "Account created");
+
+        accountEventPublisher.publishAccountCreated(
+                new AccountCreatedEvent(
+                        UUID.randomUUID(),
+                        LocalDateTime.now(),
+                        savedAccount.getId(),
+                        savedAccount.getCustomerId(),
+                        savedAccount.getAccountNumber(),
+                        savedAccount.getIban(),
+                        savedAccount.getAccountType().name(),
+                        savedAccount.getCurrency().name(),
+                        savedAccount.getStatus().name(),
+                        savedAccount.getBalance(),
+                        savedAccount.getAvailableBalance()
+                )
+        );
     }
 
     @Transactional
@@ -75,26 +101,79 @@ public class AccountService {
             throw new CustomerValidationException("Customer is not eligible for account creation");
         }
 
-        Account savedAccount = persistNewAccount(
-                request.customerId(),
-                request.accountType() == null ? AccountType.CURRENT : request.accountType(),
-                request.currency() == null ? Currency.AZN : request.currency()
+        Account account = new Account();
+        account.setCustomerId(request.customerId());
+        account.setAccountNumber(generateAccountNumber());
+        account.setIban(generateIban());
+        account.setAccountType(request.accountType() == null ? AccountType.CURRENT : request.accountType());
+        account.setCurrency(request.currency() == null ? Currency.AZN : request.currency());
+        account.setBalance(BigDecimal.ZERO);
+        account.setAvailableBalance(BigDecimal.ZERO);
+        account.setStatus(AccountStatus.ACTIVE);
+
+        Account savedAccount = accountRepository.save(account);
+        accountStatusHistoryService.record(savedAccount, null, AccountStatus.ACTIVE, "Account created");
+
+        accountEventPublisher.publishAccountCreated(
+                new AccountCreatedEvent(
+                        UUID.randomUUID(),
+                        LocalDateTime.now(),
+                        savedAccount.getId(),
+                        savedAccount.getCustomerId(),
+                        savedAccount.getAccountNumber(),
+                        savedAccount.getIban(),
+                        savedAccount.getAccountType().name(),
+                        savedAccount.getCurrency().name(),
+                        savedAccount.getStatus().name(),
+                        savedAccount.getBalance(),
+                        savedAccount.getAvailableBalance()
+                )
         );
 
-        publishAccountCreated(savedAccount);
-        return mapToResponse(savedAccount);
+        return new AccountResponseDto(
+                savedAccount.getId(),
+                savedAccount.getCustomerId(),
+                savedAccount.getAccountNumber(),
+                savedAccount.getIban(),
+                savedAccount.getAccountType(),
+                savedAccount.getCurrency(),
+                savedAccount.getBalance(),
+                savedAccount.getAvailableBalance(),
+                savedAccount.getStatus()
+        );
     }
 
     @Transactional(readOnly = true)
     public AccountResponseDto getById(UUID id) {
-        return mapToResponse(getActiveAccountById(id));
+        Account account = getActiveAccountById(id);
+        return new AccountResponseDto(
+                account.getId(),
+                account.getCustomerId(),
+                account.getAccountNumber(),
+                account.getIban(),
+                account.getAccountType(),
+                account.getCurrency(),
+                account.getBalance(),
+                account.getAvailableBalance(),
+                account.getStatus()
+        );
     }
 
     @Transactional(readOnly = true)
     public List<AccountResponseDto> getByCustomerId(UUID customerId) {
         return accountRepository.findAllByCustomerIdAndDeletedFalse(customerId)
                 .stream()
-                .map(this::mapToResponse)
+                .map(account -> new AccountResponseDto(
+                        account.getId(),
+                        account.getCustomerId(),
+                        account.getAccountNumber(),
+                        account.getIban(),
+                        account.getAccountType(),
+                        account.getCurrency(),
+                        account.getBalance(),
+                        account.getAvailableBalance(),
+                        account.getStatus()
+                ))
                 .toList();
     }
 
@@ -113,9 +192,31 @@ public class AccountService {
         AccountStatus oldStatus = account.getStatus();
         account.setStatus(AccountStatus.BLOCKED);
         Account savedAccount = accountRepository.save(account);
-        accountStatusHistoryService.record(savedAccount, oldStatus, AccountStatus.BLOCKED, extractReason(request));
-        publishAccountBlocked(savedAccount);
-        return mapToResponse(savedAccount);
+        accountStatusHistoryService.record(savedAccount, oldStatus, AccountStatus.BLOCKED, request == null ? null : request.reason());
+
+        accountEventPublisher.publishAccountBlocked(
+                new AccountBlockedEvent(
+                        UUID.randomUUID(),
+                        LocalDateTime.now(),
+                        savedAccount.getId(),
+                        savedAccount.getCustomerId(),
+                        savedAccount.getAccountNumber(),
+                        savedAccount.getIban(),
+                        savedAccount.getStatus().name()
+                )
+        );
+
+        return new AccountResponseDto(
+                savedAccount.getId(),
+                savedAccount.getCustomerId(),
+                savedAccount.getAccountNumber(),
+                savedAccount.getIban(),
+                savedAccount.getAccountType(),
+                savedAccount.getCurrency(),
+                savedAccount.getBalance(),
+                savedAccount.getAvailableBalance(),
+                savedAccount.getStatus()
+        );
     }
 
     @Transactional
@@ -133,8 +234,18 @@ public class AccountService {
         AccountStatus oldStatus = account.getStatus();
         account.setStatus(AccountStatus.ACTIVE);
         Account savedAccount = accountRepository.save(account);
-        accountStatusHistoryService.record(savedAccount, oldStatus, AccountStatus.ACTIVE, extractReason(request));
-        return mapToResponse(savedAccount);
+        accountStatusHistoryService.record(savedAccount, oldStatus, AccountStatus.ACTIVE, request == null ? null : request.reason());
+        return new AccountResponseDto(
+                savedAccount.getId(),
+                savedAccount.getCustomerId(),
+                savedAccount.getAccountNumber(),
+                savedAccount.getIban(),
+                savedAccount.getAccountType(),
+                savedAccount.getCurrency(),
+                savedAccount.getBalance(),
+                savedAccount.getAvailableBalance(),
+                savedAccount.getStatus()
+        );
     }
 
     @Transactional
@@ -152,14 +263,35 @@ public class AccountService {
         AccountStatus oldStatus = account.getStatus();
         account.setStatus(AccountStatus.CLOSED);
         Account savedAccount = accountRepository.save(account);
-        accountStatusHistoryService.record(savedAccount, oldStatus, AccountStatus.CLOSED, extractReason(request));
-        return mapToResponse(savedAccount);
+        accountStatusHistoryService.record(savedAccount, oldStatus, AccountStatus.CLOSED, request == null ? null : request.reason());
+        return new AccountResponseDto(
+                savedAccount.getId(),
+                savedAccount.getCustomerId(),
+                savedAccount.getAccountNumber(),
+                savedAccount.getIban(),
+                savedAccount.getAccountType(),
+                savedAccount.getCurrency(),
+                savedAccount.getBalance(),
+                savedAccount.getAvailableBalance(),
+                savedAccount.getStatus()
+        );
     }
 
     @Transactional
     public AccountResponseDto debit(UUID id, AccountAmountRequestDto request) {
         Account account = getActiveAccountById(id);
-        ensureAccountIsActive(account);
+
+        if (account.getStatus() == AccountStatus.BLOCKED) {
+            throw new InvalidAccountStateException("Blocked account cannot process balance operations");
+        }
+
+        if (account.getStatus() == AccountStatus.CLOSED) {
+            throw new InvalidAccountStateException("Closed account cannot process balance operations");
+        }
+
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw new InvalidAccountStateException("Only active account can process balance operations");
+        }
 
         if (account.getAvailableBalance().compareTo(request.amount()) < 0) {
             throw new InsufficientBalanceException("Insufficient available balance");
@@ -183,14 +315,47 @@ public class AccountService {
                 balanceAfter
         );
 
-        publishAccountDebited(savedAccount, request.transactionId(), request.amount());
-        return mapToResponse(savedAccount);
+        accountEventPublisher.publishAccountDebited(
+                new AccountDebitedEvent(
+                        UUID.randomUUID(),
+                        LocalDateTime.now(),
+                        savedAccount.getId(),
+                        savedAccount.getCustomerId(),
+                        request.transactionId(),
+                        request.amount(),
+                        savedAccount.getBalance(),
+                        savedAccount.getAvailableBalance()
+                )
+        );
+
+        return new AccountResponseDto(
+                savedAccount.getId(),
+                savedAccount.getCustomerId(),
+                savedAccount.getAccountNumber(),
+                savedAccount.getIban(),
+                savedAccount.getAccountType(),
+                savedAccount.getCurrency(),
+                savedAccount.getBalance(),
+                savedAccount.getAvailableBalance(),
+                savedAccount.getStatus()
+        );
     }
 
     @Transactional
     public AccountResponseDto credit(UUID id, AccountAmountRequestDto request) {
         Account account = getActiveAccountById(id);
-        ensureAccountIsActive(account);
+
+        if (account.getStatus() == AccountStatus.BLOCKED) {
+            throw new InvalidAccountStateException("Blocked account cannot process balance operations");
+        }
+
+        if (account.getStatus() == AccountStatus.CLOSED) {
+            throw new InvalidAccountStateException("Closed account cannot process balance operations");
+        }
+
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw new InvalidAccountStateException("Only active account can process balance operations");
+        }
 
         BigDecimal balanceBefore = account.getBalance();
         BigDecimal availableBefore = account.getAvailableBalance();
@@ -210,123 +375,35 @@ public class AccountService {
                 balanceAfter
         );
 
-        publishAccountCredited(savedAccount, request.transactionId(), request.amount());
-        return mapToResponse(savedAccount);
-    }
-
-    private Account persistNewAccount(UUID customerId, AccountType accountType, Currency currency) {
-        Account account = new Account();
-        account.setCustomerId(customerId);
-        account.setAccountNumber(generateAccountNumber());
-        account.setIban(generateIban());
-        account.setAccountType(accountType);
-        account.setCurrency(currency);
-        account.setBalance(BigDecimal.ZERO);
-        account.setAvailableBalance(BigDecimal.ZERO);
-        account.setStatus(AccountStatus.ACTIVE);
-
-        Account savedAccount = accountRepository.save(account);
-        accountStatusHistoryService.record(savedAccount, null, AccountStatus.ACTIVE, "Account created");
-        return savedAccount;
-    }
-
-    private void ensureAccountIsActive(Account account) {
-        if (account.getStatus() == AccountStatus.BLOCKED) {
-            throw new InvalidAccountStateException("Blocked account cannot process balance operations");
-        }
-
-        if (account.getStatus() == AccountStatus.CLOSED) {
-            throw new InvalidAccountStateException("Closed account cannot process balance operations");
-        }
-
-        if (account.getStatus() != AccountStatus.ACTIVE) {
-            throw new InvalidAccountStateException("Only active account can process balance operations");
-        }
-    }
-
-    private void publishAccountCreated(Account account) {
-        accountEventPublisher.publishAccountCreated(
-                new AccountCreatedEvent(
-                        UUID.randomUUID(),
-                        LocalDateTime.now(),
-                        account.getId(),
-                        account.getCustomerId(),
-                        account.getAccountNumber(),
-                        account.getIban(),
-                        account.getAccountType().name(),
-                        account.getCurrency().name(),
-                        account.getStatus().name(),
-                        account.getBalance(),
-                        account.getAvailableBalance()
-                )
-        );
-    }
-
-    private void publishAccountBlocked(Account account) {
-        accountEventPublisher.publishAccountBlocked(
-                new AccountBlockedEvent(
-                        UUID.randomUUID(),
-                        LocalDateTime.now(),
-                        account.getId(),
-                        account.getCustomerId(),
-                        account.getAccountNumber(),
-                        account.getIban(),
-                        account.getStatus().name()
-                )
-        );
-    }
-
-    private void publishAccountDebited(Account account, UUID transactionId, BigDecimal amount) {
-        accountEventPublisher.publishAccountDebited(
-                new AccountDebitedEvent(
-                        UUID.randomUUID(),
-                        LocalDateTime.now(),
-                        account.getId(),
-                        account.getCustomerId(),
-                        transactionId,
-                        amount,
-                        account.getBalance(),
-                        account.getAvailableBalance()
-                )
-        );
-    }
-
-    private void publishAccountCredited(Account account, UUID transactionId, BigDecimal amount) {
         accountEventPublisher.publishAccountCredited(
                 new AccountCreditedEvent(
                         UUID.randomUUID(),
                         LocalDateTime.now(),
-                        account.getId(),
-                        account.getCustomerId(),
-                        transactionId,
-                        amount,
-                        account.getBalance(),
-                        account.getAvailableBalance()
+                        savedAccount.getId(),
+                        savedAccount.getCustomerId(),
+                        request.transactionId(),
+                        request.amount(),
+                        savedAccount.getBalance(),
+                        savedAccount.getAvailableBalance()
                 )
+        );
+
+        return new AccountResponseDto(
+                savedAccount.getId(),
+                savedAccount.getCustomerId(),
+                savedAccount.getAccountNumber(),
+                savedAccount.getIban(),
+                savedAccount.getAccountType(),
+                savedAccount.getCurrency(),
+                savedAccount.getBalance(),
+                savedAccount.getAvailableBalance(),
+                savedAccount.getStatus()
         );
     }
 
     private Account getActiveAccountById(UUID id) {
         return accountRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found"));
-    }
-
-    private String extractReason(ChangeAccountStatusRequestDto request) {
-        return request == null ? null : request.reason();
-    }
-
-    private AccountResponseDto mapToResponse(Account account) {
-        return new AccountResponseDto(
-                account.getId(),
-                account.getCustomerId(),
-                account.getAccountNumber(),
-                account.getIban(),
-                account.getAccountType(),
-                account.getCurrency(),
-                account.getBalance(),
-                account.getAvailableBalance(),
-                account.getStatus()
-        );
     }
 
     private String generateAccountNumber() {
