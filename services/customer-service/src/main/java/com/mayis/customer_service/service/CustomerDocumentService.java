@@ -12,7 +12,6 @@ import com.mayis.customer_service.repository.CustomerDocumentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -37,14 +36,25 @@ public class CustomerDocumentService {
 
         return customerDocumentRepository.findAllByCustomerIdAndDeletedFalse(customer.getId())
                 .stream()
-                .map(this::mapToResponse)
+                .map(document -> new CustomerDocumentResponseDto(
+                        document.getId(),
+                        document.getCustomer().getId(),
+                        document.getDocumentType(),
+                        document.getDocumentNumber(),
+                        document.getIssuingCountry(),
+                        document.getIssueDate(),
+                        document.getExpiryDate()
+                ))
                 .toList();
     }
 
     @Transactional
     public CustomerDocumentResponseDto create(UUID customerId, CreateCustomerDocumentRequestDto request) {
         Customer customer = customerRepositorySupport.getActiveCustomerById(customerId);
-        validateDateRange(request.issueDate(), request.expiryDate());
+
+        if (request.issueDate() != null && request.expiryDate() != null && request.expiryDate().isBefore(request.issueDate())) {
+            throw new InvalidCustomerDocumentException("Document expiry date cannot be before issue date");
+        }
 
         CustomerDocument document = new CustomerDocument();
         document.setCustomer(customer);
@@ -54,7 +64,16 @@ public class CustomerDocumentService {
         document.setIssueDate(request.issueDate());
         document.setExpiryDate(request.expiryDate());
 
-        return mapToResponse(customerDocumentRepository.save(document));
+        CustomerDocument savedDocument = customerDocumentRepository.save(document);
+        return new CustomerDocumentResponseDto(
+                savedDocument.getId(),
+                savedDocument.getCustomer().getId(),
+                savedDocument.getDocumentType(),
+                savedDocument.getDocumentNumber(),
+                savedDocument.getIssuingCountry(),
+                savedDocument.getIssueDate(),
+                savedDocument.getExpiryDate()
+        );
     }
 
     @Transactional
@@ -64,7 +83,10 @@ public class CustomerDocumentService {
             UpdateCustomerDocumentRequestDto request
     ) {
         customerRepositorySupport.getActiveCustomerById(customerId);
-        validateDateRange(request.issueDate(), request.expiryDate());
+
+        if (request.issueDate() != null && request.expiryDate() != null && request.expiryDate().isBefore(request.issueDate())) {
+            throw new InvalidCustomerDocumentException("Document expiry date cannot be before issue date");
+        }
 
         CustomerDocument document = customerDocumentRepository
                 .findByIdAndCustomerIdAndDeletedFalse(documentId, customerId)
@@ -76,7 +98,16 @@ public class CustomerDocumentService {
         document.setIssueDate(request.issueDate());
         document.setExpiryDate(request.expiryDate());
 
-        return mapToResponse(customerDocumentRepository.save(document));
+        CustomerDocument savedDocument = customerDocumentRepository.save(document);
+        return new CustomerDocumentResponseDto(
+                savedDocument.getId(),
+                savedDocument.getCustomer().getId(),
+                savedDocument.getDocumentType(),
+                savedDocument.getDocumentNumber(),
+                savedDocument.getIssuingCountry(),
+                savedDocument.getIssueDate(),
+                savedDocument.getExpiryDate()
+        );
     }
 
     @Transactional
@@ -94,23 +125,5 @@ public class CustomerDocumentService {
         document.setDeleted(true);
         document.setDeletedAt(LocalDateTime.now());
         customerDocumentRepository.save(document);
-    }
-
-    private void validateDateRange(LocalDate issueDate, LocalDate expiryDate) {
-        if (issueDate != null && expiryDate != null && expiryDate.isBefore(issueDate)) {
-            throw new InvalidCustomerDocumentException("Document expiry date cannot be before issue date");
-        }
-    }
-
-    private CustomerDocumentResponseDto mapToResponse(CustomerDocument document) {
-        return new CustomerDocumentResponseDto(
-                document.getId(),
-                document.getCustomer().getId(),
-                document.getDocumentType(),
-                document.getDocumentNumber(),
-                document.getIssuingCountry(),
-                document.getIssueDate(),
-                document.getExpiryDate()
-        );
     }
 }
