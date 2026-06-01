@@ -45,6 +45,15 @@ app:
     topics:
       customer-created: customer.created
       account-created: account.created
+      account-blocked: account.blocked
+      account-debited: account.debited
+      account-credited: account.credited
 
 server:
   port: 8083
+
+grpc:
+  client:
+    customer-validation:
+      address: static://localhost:9091
+      negotiationType: plaintext
