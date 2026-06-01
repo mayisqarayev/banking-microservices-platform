@@ -35,7 +35,16 @@ public class CustomerAddressService {
 
         return customerAddressRepository.findAllByCustomerIdAndDeletedFalse(customer.getId())
                 .stream()
-                .map(this::mapToResponse)
+                .map(address -> new CustomerAddressResponseDto(
+                        address.getId(),
+                        address.getCustomer().getId(),
+                        address.getAddressType(),
+                        address.getCountry(),
+                        address.getCity(),
+                        address.getStreet(),
+                        address.getPostalCode(),
+                        address.isPrimary()
+                ))
                 .toList();
     }
 
@@ -44,7 +53,12 @@ public class CustomerAddressService {
         Customer customer = customerRepositorySupport.getActiveCustomerById(customerId);
 
         if (request.isPrimary()) {
-            clearPrimaryAddresses(customerId);
+            List<CustomerAddress> addresses = customerAddressRepository.findAllByCustomerIdAndDeletedFalse(customerId);
+            for (CustomerAddress address : addresses) {
+                if (address.isPrimary()) {
+                    address.setPrimary(false);
+                }
+            }
         }
 
         CustomerAddress address = new CustomerAddress();
@@ -56,7 +70,17 @@ public class CustomerAddressService {
         address.setPostalCode(request.postalCode());
         address.setPrimary(request.isPrimary());
 
-        return mapToResponse(customerAddressRepository.save(address));
+        CustomerAddress savedAddress = customerAddressRepository.save(address);
+        return new CustomerAddressResponseDto(
+                savedAddress.getId(),
+                savedAddress.getCustomer().getId(),
+                savedAddress.getAddressType(),
+                savedAddress.getCountry(),
+                savedAddress.getCity(),
+                savedAddress.getStreet(),
+                savedAddress.getPostalCode(),
+                savedAddress.isPrimary()
+        );
     }
 
     @Transactional
@@ -72,7 +96,12 @@ public class CustomerAddressService {
                 .orElseThrow(() -> new CustomerAddressNotFoundException("Customer address not found"));
 
         if (request.isPrimary()) {
-            clearPrimaryAddresses(customerId);
+            List<CustomerAddress> addresses = customerAddressRepository.findAllByCustomerIdAndDeletedFalse(customerId);
+            for (CustomerAddress existingAddress : addresses) {
+                if (existingAddress.isPrimary()) {
+                    existingAddress.setPrimary(false);
+                }
+            }
         }
 
         address.setAddressType(request.addressType());
@@ -82,7 +111,17 @@ public class CustomerAddressService {
         address.setPostalCode(request.postalCode());
         address.setPrimary(request.isPrimary());
 
-        return mapToResponse(customerAddressRepository.save(address));
+        CustomerAddress savedAddress = customerAddressRepository.save(address);
+        return new CustomerAddressResponseDto(
+                savedAddress.getId(),
+                savedAddress.getCustomer().getId(),
+                savedAddress.getAddressType(),
+                savedAddress.getCountry(),
+                savedAddress.getCity(),
+                savedAddress.getStreet(),
+                savedAddress.getPostalCode(),
+                savedAddress.isPrimary()
+        );
     }
 
     @Transactional
@@ -101,27 +140,5 @@ public class CustomerAddressService {
         address.setDeletedAt(LocalDateTime.now());
         address.setPrimary(false);
         customerAddressRepository.save(address);
-    }
-
-    private void clearPrimaryAddresses(UUID customerId) {
-        List<CustomerAddress> addresses = customerAddressRepository.findAllByCustomerIdAndDeletedFalse(customerId);
-        for (CustomerAddress address : addresses) {
-            if (address.isPrimary()) {
-                address.setPrimary(false);
-            }
-        }
-    }
-
-    private CustomerAddressResponseDto mapToResponse(CustomerAddress address) {
-        return new CustomerAddressResponseDto(
-                address.getId(),
-                address.getCustomer().getId(),
-                address.getAddressType(),
-                address.getCountry(),
-                address.getCity(),
-                address.getStreet(),
-                address.getPostalCode(),
-                address.isPrimary()
-        );
     }
 }
