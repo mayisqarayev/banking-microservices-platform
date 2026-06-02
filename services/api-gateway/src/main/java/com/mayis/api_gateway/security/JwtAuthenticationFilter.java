@@ -38,7 +38,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             "/api/v1/user/*/activate",
             "/api/v1/user/*/deactivate",
             "/api/v1/user/*/suspend",
-            "/api/v1/user/*/unsuspend"
+            "/api/v1/user/*/unsuspend",
+            "/api/v1/audit-logs/**"
     );
 
     private final JwtService jwtService;
