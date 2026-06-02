@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: audit-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5443/audit_db
+    username: audit_user
+    password: audit_password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: audit-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.springframework.kafka: INFO
+
+app:
+  kafka:
+    topics:
+      user-registered: user.registered
+      user-role-assigned: user.role.assigned
+      user-role-removed: user.role.removed
+      user-deleted: user.deleted
+      user-suspended: user.suspended
+      user-restored: user.restored
+      user-activated: user.activated
+      user-deactivated: user.deactivated
+      user-unsuspended: user.unsuspended
+      customer-created: customer.created
+      customer-updated: customer.updated
+      customer-blocked: customer.blocked
+      account-created: account.created
+      account-blocked: account.blocked
+      account-debited: account.debited
+      account-credited: account.credited
+
+server:
+  port: 8084
