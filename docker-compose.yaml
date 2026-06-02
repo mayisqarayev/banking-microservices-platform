@@ -38,6 +38,19 @@ services:
     volumes:
       - account_db_data:/var/lib/postgresql/data
 
+  audit-db:
+    image: postgres:16
+    container_name: audit-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: audit_db
+      POSTGRES_USER: audit_user
+      POSTGRES_PASSWORD: audit_password
+    ports:
+      - "5443:5432"
+    volumes:
+      - audit_db_data:/var/lib/postgresql/data
+
   kafka:
     image: apache/kafka:latest
     container_name: kafka
@@ -75,3 +88,4 @@ volumes:
   auth_db_data:
   customer_db_data:
   account_db_data:
+  audit_db_data:
